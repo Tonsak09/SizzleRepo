@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6609914358139628023}
+  - component: {fileID: 462219624}
   m_Layer: 0
   m_Name: Point (3)
   m_TagString: Untagged
@@ -30,6 +31,18 @@ Transform:
   m_Father: {fileID: 6609914360073994253}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &462219624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6609914358139628024}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27e1b819a4ee73f498beea7a694bcb9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6609914358192791385
 GameObject:
   m_ObjectHideFlags: 0
@@ -133,6 +146,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6609914359334195658}
+  - component: {fileID: 1559761238}
   m_Layer: 0
   m_Name: Point (1)
   m_TagString: Untagged
@@ -154,6 +168,18 @@ Transform:
   m_Father: {fileID: 6609914360073994253}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1559761238
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6609914359334195659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27e1b819a4ee73f498beea7a694bcb9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6609914359341541806
 GameObject:
   m_ObjectHideFlags: 0
@@ -193,6 +219,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6609914359368796291}
+  - component: {fileID: 1388840989}
   m_Layer: 0
   m_Name: Point (2)
   m_TagString: Untagged
@@ -214,6 +241,18 @@ Transform:
   m_Father: {fileID: 6609914360073994253}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1388840989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6609914359368796292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27e1b819a4ee73f498beea7a694bcb9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6609914359604612046
 GameObject:
   m_ObjectHideFlags: 0
@@ -223,6 +262,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6609914359604612045}
+  - component: {fileID: 1289407315}
   m_Layer: 0
   m_Name: Point
   m_TagString: Untagged
@@ -244,6 +284,18 @@ Transform:
   m_Father: {fileID: 6609914360073994253}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1289407315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6609914359604612046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27e1b819a4ee73f498beea7a694bcb9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6609914359827391521
 GameObject:
   m_ObjectHideFlags: 0
@@ -253,6 +305,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6609914359827391520}
+  - component: {fileID: 2120590527}
   m_Layer: 0
   m_Name: Movement Plane
   m_TagString: Untagged
@@ -276,6 +329,29 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2120590527
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6609914359827391521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9435228a1ad092e40aef9b0121c3b46a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  points:
+  - {fileID: 1289407315}
+  - {fileID: 1559761238}
+  - {fileID: 1388840989}
+  - {fileID: 462219624}
+  sides: []
+  connectedPlanes: []
+  mask:
+    serializedVersion: 2
+    m_Bits: 0
+  DrawMode: 1
 --- !u!1 &6609914360007626008
 GameObject:
   m_ObjectHideFlags: 0
