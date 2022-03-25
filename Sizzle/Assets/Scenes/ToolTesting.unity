@@ -602,6 +602,26 @@ PrefabInstance:
       propertyPath: boxLength
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6609914358139628023, guid: 233a2406fd2be7449abe9bedb721fa36, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6609914358139628023, guid: 233a2406fd2be7449abe9bedb721fa36, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.997
+      objectReference: {fileID: 0}
+    - target: {fileID: 6609914359334195658, guid: 233a2406fd2be7449abe9bedb721fa36, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6609914359368796291, guid: 233a2406fd2be7449abe9bedb721fa36, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6609914359604612045, guid: 233a2406fd2be7449abe9bedb721fa36, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6609914359827391520, guid: 233a2406fd2be7449abe9bedb721fa36, type: 3}
       propertyPath: m_RootOrder
       value: 3

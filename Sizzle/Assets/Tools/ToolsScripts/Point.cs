@@ -33,7 +33,10 @@ public class Point : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        UpdatePositions()
+        if(this.transform.position != previousPos)
+        {
+            UpdatePositions();
+        }
 
         previousPos = this.transform.position;
     }
@@ -48,12 +51,16 @@ public class Point : MonoBehaviour
                 bool hasSimiliar = false;
                 foreach (Point neighbor in neighbors)
                 {
-                    if(neighbor.position.x == this.transform.position.x)
+                    if (previousPos.y != this.transform.position.y)
+                    {
+                        break;
+                    }
+                    else if (neighbor.position.x == this.transform.position.x)
                     {
                         hasSimiliar = true;
                         break;
                     }
-                    else if(neighbor.position.z == this.transform.position.z)
+                    else if (neighbor.position.z == this.transform.position.z)
                     {
                         hasSimiliar = true;
                         break;
@@ -65,14 +72,15 @@ public class Point : MonoBehaviour
                         Vector3 newVec = this.transform.position - neighbor.position;
                         Vector3 oldVec = previousPos - neighbor.position;
 
-                        if(newVec.normalized == oldVec.normalized)
+                        float dot = Vector3.Dot(newVec, oldVec);
+
+                        if ((1 - dot) < 0.1f)
                         {
                             hasSimiliar = true;
                             break;
                         }
                     }
                 }
-
 
                 if(!hasSimiliar)
                 {
