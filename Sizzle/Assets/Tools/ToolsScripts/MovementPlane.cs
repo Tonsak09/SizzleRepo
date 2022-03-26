@@ -6,6 +6,9 @@ using UnityEditor;
 [ExecuteInEditMode]
 public class MovementPlane : MonoBehaviour
 {
+
+    // Todo - Override points position if moving whole plane 
+
     [Header("Plane Information")]
     public List<Point> points;
     public List<Side> sides;
