@@ -11,8 +11,13 @@ public class Point : MonoBehaviour
     public List<Point> opposites;
     public List<Point> neighbors;
     public List<Side> sides;
+    public List<MovementPlane> planes;
 
     private Vector3 previousPos;
+
+    Vector3 neighborVecTest;
+    Vector3 neighborPosVecTest;
+    float tTest;
 
     public enum ProtectPlaneForms
     {
@@ -47,11 +52,17 @@ public class Point : MonoBehaviour
         switch (MoveForm)
         {
             case ProtectPlaneForms.solo:
-
+                /*
                 // If at least one of the axis is the same as any of its neighbors allow move
                 bool hasSimiliar = false;
+                int sameVecCounter = 0;
                 foreach (Point neighbor in neighbors)
                 {
+
+                    // If the vector between the new position and its opposite
+                    // and the vector between the neighbors of this point can
+                    // intersect/form a circle of a very small radius allow the change 
+
                     if (previousPos.y != this.transform.position.y)
                     {
                         break;
@@ -73,12 +84,20 @@ public class Point : MonoBehaviour
                         Vector3 newVec = this.transform.position - neighbor.position;
                         Vector3 oldVec = previousPos - neighbor.position;
 
-                        float dot = Vector3.Dot(newVec, oldVec);
+                        float dot = Vector3.Dot(newVec.normalized, oldVec.normalized);
 
-                        if ((1 - dot) < 0.1f)
+                        if ((1 - dot) < 0.01f)
                         {
-                            hasSimiliar = true;
-                            break;
+                            print(dot);
+                            if(sameVecCounter >= 2)
+                            {
+                                hasSimiliar = true;
+                                break;
+                            }
+                            else
+                            {
+                                sameVecCounter++;
+                            }
                         }
                     }
                 }
@@ -92,6 +111,65 @@ public class Point : MonoBehaviour
                 {
                     UpdateSides();
                 }
+                */
+
+                // For every tile attached too 
+                foreach (MovementPlane plane in planes)
+                {
+                    // Get Vector between neighbors. 2 neighbors per plane 
+                    List<Point> neighbors = GetNeighborsOnPlane(plane);
+                    Vector3 neighborVec = neighbors[1].position - neighbors[0].position ;
+
+                    // Get vector between this and its opposite 
+                    Point opposite = GetOppositesOnPlane(plane);
+                    Vector3 oppositeVec = this.position - opposite.position;
+
+                    // Get t and s on any axis that is different 
+                    float t = 0;
+                    float s = 0;
+                    /*
+                    if(neighbors[0].position.x != opposite.position.x)
+                    {
+                        // Change in x axis 
+                        t = (-neighbors[0].position + opposite.position).x / (-neighborVec + oppositeVec).x;
+                        s = (-oppositeVec.x * neighbors[0].position.x + neighborVec.x * opposite.position.x) / (-neighborVec + oppositeVec).x; 
+                    }
+                    else if(neighbors[0].position.z != opposite.position.z)
+                    {
+                        // Change in z axis
+                        t = (-neighbors[0].position + opposite.position).z / (-neighborVec + oppositeVec).z;
+                        s = (-oppositeVec.z * neighbors[0].position.z + neighborVec.z * opposite.position.z) / (-neighborVec + oppositeVec).z;
+                    }
+                    else if(neighbors[0].position.y != opposite.position.y)
+                    {
+                        // Change in y axis 
+                        t = (-neighbors[0].position + opposite.position).y / (-neighborVec + oppositeVec).y;
+                        s = (-oppositeVec.y * neighbors[0].position.y + neighborVec.y * opposite.position.y) / (-neighborVec + oppositeVec).y;
+                    }
+                    */
+                    t = (-neighbors[0].position + opposite.position).x / (-neighborVec + oppositeVec).x;
+                    s = (-oppositeVec.x * neighbors[0].position.x + neighborVec.x * opposite.position.x) / (-neighborVec + oppositeVec).x; 
+
+                    print(Vector3.Distance(-neighborVec * t, oppositeVec * s));
+
+                    
+
+                    neighborVecTest = neighborVec;
+                    tTest = t;
+                    neighborPosVecTest = neighbors[0].position;
+
+                    if (Vector3.Distance(neighborVec * t, oppositeVec * s) > 0.1f)
+                    {
+                        this.transform.position = previousPos;
+                    }
+                    else
+                    {
+                        UpdateSides();
+                    }
+                }
+
+
+
 
                 break;
             case ProtectPlaneForms.oppositeReverse:
@@ -149,5 +227,41 @@ public class Point : MonoBehaviour
     {
         this.transform.position = newPos;
         previousPos = this.transform.position;
+    }
+
+    public List<Point> GetNeighborsOnPlane(MovementPlane plane)
+    {
+        List<Point> points = new List<Point>();
+
+        foreach (Point neighbor in neighbors)
+        {
+            if(neighbor.planes.Contains(plane))
+            {
+                points.Add(neighbor);
+            }
+        }
+
+        return points;
+    }
+
+    public Point GetOppositesOnPlane(MovementPlane plane)
+    {
+        List<Point> points = new List<Point>();
+
+        foreach (Point opposite in opposites)
+        {
+            if (opposite.planes.Contains(plane))
+            {
+                return opposite;
+            }
+        }
+
+        return null;
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.DrawSphere(-neighborVecTest * tTest + neighborPosVecTest, 0.1f);
+
     }
 }

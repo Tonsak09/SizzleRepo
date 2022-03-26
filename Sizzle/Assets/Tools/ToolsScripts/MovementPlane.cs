@@ -86,11 +86,10 @@ public class MovementPlane : MonoBehaviour
     /// </summary>
     private void Generate()
     {
-        // Start at one point furthest in axis 
+        // Get negative most in all axis 
 
         // Move along one direction until reach past plane
 
         // Hold list of all Vector3 positions that detected collsions
     }
-
 }
