@@ -40,6 +40,8 @@ public class Side : MonoBehaviour
         {
             Vector3 difference =  this.transform.position - previousPos;
             point.OverridePosition(point.position + difference);
+
+            point.UpdateSides(this);
         }
     }
 
