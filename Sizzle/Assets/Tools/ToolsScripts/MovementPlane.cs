@@ -86,12 +86,10 @@ public class MovementPlane : MonoBehaviour
     /// </summary>
     private void Generate()
     {
-        // Choose one point in the tile
+        // Breaks the polygon into a square and two triangles 
 
-        // x axis - point towards one of its neighbors 
+        // Get vector between random point and its neighbor
 
-        // y axis - point towards other axis 
-
-        // Continue until point has reach or right before going past opposite 
+        // Get vector between other neighbor and opposite point of choosen 
     }
 }
