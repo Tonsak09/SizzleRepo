@@ -15,10 +15,6 @@ public class Point : MonoBehaviour
 
     private Vector3 previousPos;
 
-    Vector3 neighborVecTest;
-    Vector3 neighborPosVecTest;
-    float tTest;
-
     public enum ProtectPlaneForms
     {
         solo, // Can only be moved in axis that does not destroy plane, no influence on other points 
@@ -39,7 +35,7 @@ public class Point : MonoBehaviour
     {
         ChangeState();
 
-        if(this.transform.position != previousPos)
+        if (this.transform.position != previousPos)
         {
             UpdatePositions();
         }
@@ -52,124 +48,26 @@ public class Point : MonoBehaviour
         switch (MoveForm)
         {
             case ProtectPlaneForms.solo:
-                /*
-                // If at least one of the axis is the same as any of its neighbors allow move
-                bool hasSimiliar = false;
-                int sameVecCounter = 0;
-                foreach (Point neighbor in neighbors)
+
+
+                bool coplaner = true;
+                foreach (MovementPlane plane in planes)
                 {
+                    List<Point> neighbors = GetNeighborsOnPlane(plane);
+                    Point opposite = GetOppositesOnPlane(plane);
 
-                    // If the vector between the new position and its opposite
-                    // and the vector between the neighbors of this point can
-                    // intersect/form a circle of a very small radius allow the change 
-
-                    if (previousPos.y != this.transform.position.y)
+                    if (!IsCoplaner(neighbors[0].position, neighbors[1].position, opposite.position, this.position))
                     {
+                        this.transform.position = previousPos;
+
+                        coplaner = false;
                         break;
-                    }
-                    else if (neighbor.position.x == this.transform.position.x)
-                    {
-                        hasSimiliar = true;
-                        break;
-                    }
-                    else if (neighbor.position.z == this.transform.position.z)
-                    {
-                        hasSimiliar = true;
-                        break;
-                    }
-                    else
-                    {
-                        // Compare if vector between new pos and neighbor
-                        // is the same as old pos and neighbor 
-                        Vector3 newVec = this.transform.position - neighbor.position;
-                        Vector3 oldVec = previousPos - neighbor.position;
-
-                        float dot = Vector3.Dot(newVec.normalized, oldVec.normalized);
-
-                        if ((1 - dot) < 0.01f)
-                        {
-                            print(dot);
-                            if(sameVecCounter >= 2)
-                            {
-                                hasSimiliar = true;
-                                break;
-                            }
-                            else
-                            {
-                                sameVecCounter++;
-                            }
-                        }
                     }
                 }
-
-                if(!hasSimiliar)
-                {
-                    // Otherwise revert to previousPos
-                    this.transform.position = previousPos;
-                }
-                else
+                if (coplaner)
                 {
                     UpdateSides();
                 }
-                */
-
-                // For every tile attached too 
-                foreach (MovementPlane plane in planes)
-                {
-                    // Get Vector between neighbors. 2 neighbors per plane 
-                    List<Point> neighbors = GetNeighborsOnPlane(plane);
-                    Vector3 neighborVec = neighbors[1].position - neighbors[0].position ;
-
-                    // Get vector between this and its opposite 
-                    Point opposite = GetOppositesOnPlane(plane);
-                    Vector3 oppositeVec = this.position - opposite.position;
-
-                    // Get t and s on any axis that is different 
-                    float t = 0;
-                    float s = 0;
-                    /*
-                    if(neighbors[0].position.x != opposite.position.x)
-                    {
-                        // Change in x axis 
-                        t = (-neighbors[0].position + opposite.position).x / (-neighborVec + oppositeVec).x;
-                        s = (-oppositeVec.x * neighbors[0].position.x + neighborVec.x * opposite.position.x) / (-neighborVec + oppositeVec).x; 
-                    }
-                    else if(neighbors[0].position.z != opposite.position.z)
-                    {
-                        // Change in z axis
-                        t = (-neighbors[0].position + opposite.position).z / (-neighborVec + oppositeVec).z;
-                        s = (-oppositeVec.z * neighbors[0].position.z + neighborVec.z * opposite.position.z) / (-neighborVec + oppositeVec).z;
-                    }
-                    else if(neighbors[0].position.y != opposite.position.y)
-                    {
-                        // Change in y axis 
-                        t = (-neighbors[0].position + opposite.position).y / (-neighborVec + oppositeVec).y;
-                        s = (-oppositeVec.y * neighbors[0].position.y + neighborVec.y * opposite.position.y) / (-neighborVec + oppositeVec).y;
-                    }
-                    */
-                    t = (-neighbors[0].position + opposite.position).x / (-neighborVec + oppositeVec).x;
-                    s = (-oppositeVec.x * neighbors[0].position.x + neighborVec.x * opposite.position.x) / (-neighborVec + oppositeVec).x; 
-
-                    print(Vector3.Distance(-neighborVec * t, oppositeVec * s));
-
-                    
-
-                    neighborVecTest = neighborVec;
-                    tTest = t;
-                    neighborPosVecTest = neighbors[0].position;
-
-                    if (Vector3.Distance(neighborVec * t, oppositeVec * s) > 0.1f)
-                    {
-                        this.transform.position = previousPos;
-                    }
-                    else
-                    {
-                        UpdateSides();
-                    }
-                }
-
-
-
 
                 break;
             case ProtectPlaneForms.oppositeReverse:
@@ -185,7 +83,7 @@ public class Point : MonoBehaviour
                 break;
             case ProtectPlaneForms.oppositeCopy:
                 // Get Vector difference between new and old position
-                difference =  this.transform.position - previousPos;
+                difference = this.transform.position - previousPos;
 
                 foreach (Point point in opposites)
                 {
@@ -196,19 +94,49 @@ public class Point : MonoBehaviour
             default:
                 break;
         }
+
     }
 
-    public void UpdateSides()
+    private bool IsCoplaner(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4)
+    {
+        // I have no idea how this works I stole it from 
+        // Geeksforgeeks and I feel bad. NEED TO LEARN 
+
+        float a1 = p2.x - p1.x;
+        float b1 = p2.y - p1.y;
+        float c1 = p2.z - p1.z;
+        float a2 = p3.x - p1.x;
+        float b2 = p3.y - p1.y;
+        float c2 = p3.z - p1.z;
+        float a = b1 * c2 - b2 * c1;
+        float b = a2 * c1 - a1 * c2;
+        float c = a1 * b2 - b1 * a2;
+        float d = (-a * p1.x - b * p1.y - c * p1.z);
+
+        // equation of plane is: a*x + b*y + c*z = 0 #
+
+        // checking if the 4th point satisfies
+        // the above equation
+        if (a * p4.x + b * p4.y + c * p4.z + d == 0)
+            return true;
+        else
+            return false;
+    }
+
+    public void UpdateSides(Side ignore = null)
     {
         foreach (Side side in sides)
         {
-            side.UpdateOnPointMove();
+            if (side != ignore)
+            {
+                side.UpdateOnPointMove();
+            }
         }
     }
 
     private void ChangeState()
     {
-        if(Input.GetKeyDown(KeyCode.Alpha1))
+        if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             MoveForm = ProtectPlaneForms.solo;
         }
@@ -235,7 +163,7 @@ public class Point : MonoBehaviour
 
         foreach (Point neighbor in neighbors)
         {
-            if(neighbor.planes.Contains(plane))
+            if (neighbor.planes.Contains(plane))
             {
                 points.Add(neighbor);
             }
@@ -257,11 +185,5 @@ public class Point : MonoBehaviour
         }
 
         return null;
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.DrawSphere(-neighborVecTest * tTest + neighborPosVecTest, 0.1f);
-
     }
 }

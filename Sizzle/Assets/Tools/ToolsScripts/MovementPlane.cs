@@ -86,10 +86,12 @@ public class MovementPlane : MonoBehaviour
     /// </summary>
     private void Generate()
     {
-        // Get negative most in all axis 
+        // Choose one point in the tile
 
-        // Move along one direction until reach past plane
+        // x axis - point towards one of its neighbors 
 
-        // Hold list of all Vector3 positions that detected collsions
+        // y axis - point towards other axis 
+
+        // Continue until point has reach or right before going past opposite 
     }
 }

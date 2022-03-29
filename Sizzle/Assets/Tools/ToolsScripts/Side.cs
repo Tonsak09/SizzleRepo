@@ -25,7 +25,7 @@ public class Side : MonoBehaviour
             UpdatePositionsFromPosition();
         }
 
-        if(previousScale != this.transform.localScale)
+        if (previousScale != this.transform.localScale)
         {
             UpdatePositionsFromScale();
         }
@@ -38,8 +38,10 @@ public class Side : MonoBehaviour
     {
         foreach (Point point in points)
         {
-            Vector3 difference =  this.transform.position - previousPos;
+            Vector3 difference = this.transform.position - previousPos;
             point.OverridePosition(point.position + difference);
+
+            point.UpdateSides(this);
         }
     }
 
