@@ -49,7 +49,7 @@ public class Point : MonoBehaviour
         {
             case ProtectPlaneForms.solo:
 
-
+                /*
                 bool coplaner = true;
                 foreach (MovementPlane plane in planes)
                 {
@@ -68,7 +68,8 @@ public class Point : MonoBehaviour
                 {
                     UpdateSides();
                 }
-
+                */
+                //this.transform.position = previousPos;
                 break;
             case ProtectPlaneForms.oppositeReverse:
 

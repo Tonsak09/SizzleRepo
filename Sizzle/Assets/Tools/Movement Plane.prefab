@@ -100,6 +100,8 @@ MonoBehaviour:
   points:
   - {fileID: 1289407315}
   - {fileID: 1559761238}
+  sides:
+  - {fileID: 3248084876698794700}
 --- !u!1 &6609914358265878955
 GameObject:
   m_ObjectHideFlags: 0
@@ -180,6 +182,8 @@ MonoBehaviour:
   points:
   - {fileID: 1289407315}
   - {fileID: 462219624}
+  sides:
+  - {fileID: 3862386351850560201}
 --- !u!1 &6609914359334195659
 GameObject:
   m_ObjectHideFlags: 0
@@ -280,6 +284,8 @@ MonoBehaviour:
   points:
   - {fileID: 1388840989}
   - {fileID: 462219624}
+  sides:
+  - {fileID: 3614600077167070439}
 --- !u!1 &6609914359368796292
 GameObject:
   m_ObjectHideFlags: 0
@@ -493,6 +499,8 @@ MonoBehaviour:
   points:
   - {fileID: 1559761238}
   - {fileID: 1388840989}
+  sides:
+  - {fileID: 745994362294956805}
 --- !u!1 &6609914360073994254
 GameObject:
   m_ObjectHideFlags: 0

@@ -86,10 +86,6 @@ public class MovementPlane : MonoBehaviour
     /// </summary>
     private void Generate()
     {
-        // Breaks the polygon into a square and two triangles 
-
-        // Get vector between random point and its neighbor
-
-        // Get vector between other neighbor and opposite point of choosen 
+        // 
     }
 }
