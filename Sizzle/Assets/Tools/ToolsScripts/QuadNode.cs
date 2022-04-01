@@ -17,6 +17,7 @@ public class QuadNode : MonoBehaviour
     public QuadNode[] divisions;
 
     public GameObject quadNodePrefab;
+    public int shapesCount = 0;
 
     public bool generate;
 
@@ -33,6 +34,12 @@ public class QuadNode : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
+        if(shapes != null)
+        {
+            shapesCount = shapes.Count;
+        }
+
         //generate = false;
         if (generate)
         {
@@ -59,33 +66,47 @@ public class QuadNode : MonoBehaviour
         // Get all objects within the box 
         Collider[] collisions = Physics.OverlapBox(this.transform.position, this.transform.localScale, this.transform.rotation, mask);
         // Also need the root position
+        Vector3[] planePositions = null;
 
+        int sum = 0;
         foreach (Collider col in collisions)
         {
             // Get verticies that actually exist in area 
-            Vector3[] planePositions = ProjectToPlane(col.transform.position, col.GetComponent<MeshFilter>().sharedMesh.vertices).ToArray();
+            planePositions = ProjectToPlane(col.transform.position, col.GetComponent<MeshFilter>().sharedMesh.vertices).ToArray();
+            
+            sum += planePositions.Length;
+
+            foreach (Vector3 point in planePositions)
+            {
+                if (!PlaneContainsPoint(point))
+                {
+                    print(point);
+                }
+            }
+
             Add(new Shape( col.transform.position, planePositions));
         }
+        print(sum);
+        
     }
 
     public void Add(Shape shape)
     {
         // For each object get its verticies to see if box contains it 
         
-        if (shapes.Count + 1 < MAXOBJBEFOREDIVIDE)
+
+
+        if(PlaneContainsShape(shape))
         {
-            shapes.Add(shape);
             
-        }
-        else
-        {
             if (divisions == null || divisions.Length == 0)
             {
-                // Saves code and apart of group by default anyway 
-                shapes.Add(shape);
+                    shapes.Add(shape);
 
-                // Make divisions 
-                Divide();
+                if (shapes.Count + 1 >= MAXOBJBEFOREDIVIDE)
+                {
+                    Divide();
+                }
             }
             else
             {
@@ -93,7 +114,7 @@ public class QuadNode : MonoBehaviour
                 QuadNode smallestNode = SmallestNode(shape);
 
                 // If null or self add to this node 
-                if(smallestNode == null || smallestNode == this)
+                if (smallestNode == null || smallestNode == this)
                 {
                     shapes.Add(shape);
                 }
@@ -102,10 +123,12 @@ public class QuadNode : MonoBehaviour
                     // else add to the child 
                     smallestNode.shapes.Add(shape);
                 }
-
             }
-        }
-        
+            }
+            else
+            {
+                shapes.Add(shape);
+            }
     }
 
     private void Divide()
@@ -122,7 +145,7 @@ public class QuadNode : MonoBehaviour
             {
 
                 // Centers new node in middle of quadrant but same z axis
-                GameObject nodeTemp = Instantiate(this.gameObject, root +
+                GameObject nodeTemp = Instantiate(quadNodePrefab, root +
                     new Vector3
                     (
                         x * (this.transform.localScale.x / 2) + (this.transform.localScale.x / 4), 
@@ -132,7 +155,8 @@ public class QuadNode : MonoBehaviour
                     Quaternion.identity
                 );
 
-                nodeTemp.GetComponentInParent<QuadNode>().divisions = null;
+                nodeTemp.GetComponent<QuadNode>().divisions = null;
+                nodeTemp.GetComponent<QuadNode>().shapes = new List<Shape>();
 
                 // Does not need to affect z axis**** 
                 nodeTemp.transform.localScale /= 2;
@@ -142,18 +166,20 @@ public class QuadNode : MonoBehaviour
             }
         }
 
-        foreach (Shape shape in shapes)
+        for (int i = 0; i < shapes.Count; i++)
         {
-            if (PlaneContainsShape(shape))
+            if (PlaneContainsShape(shapes[i]))
             {
-                QuadNode smallest = SmallestNode(shape);
+                QuadNode smallest = SmallestNode(shapes[i]);
 
                 if (smallest != null || smallest != this)
                 {
-                    smallest.Add(shape);
+                    smallest.Add(shapes[i]);
+                    this.shapes.RemoveAt(i);
+                    i--;
                 }
             }
-            
+
             // Already apart of group so need to re-add 
         }
     }
@@ -169,20 +195,29 @@ public class QuadNode : MonoBehaviour
         {
             if (divisions != null)
             {
+                QuadNode quad = null;
                 // Iterate through each child to see if can fit into any of these
                 foreach (QuadNode child in divisions)
                 {
                     if (child.PlaneContainsShape(shape))
                     {
-                        return SmallestNode(shape);
+                        quad = child.SmallestNode(shape);
                     }
                 }
 
-                // No child can fit 
-                return this;
+                if(quad == null)
+                {
+                    // No child can fit 
+                    return this;
+                }
+                else
+                {
+                    return quad;
+                }
             }
             else
             {
+                // Leaf in tree
                 return this;
             }
         }
@@ -211,6 +246,67 @@ public class QuadNode : MonoBehaviour
         return nodes;
     }
 
+    /// <summary>
+    /// Simplifies the vertices to a represent a shape along the up most
+    /// plane. If vertices go out of up most plane they are cut 
+    /// </summary>
+    /// <param name="verticies"></param>
+    /// <returns></returns>
+    private List<Vector3> ProjectToPlane(Vector3 root, Vector3[] verticies)
+    {
+        List<Vector3> projections = new List<Vector3>();
+
+        foreach (Vector3 vertex in verticies)
+        {
+            Vector3 projection = Vector3.ProjectOnPlane(root + vertex, plane.normal);
+
+            if (!projections.Contains(projection))
+            {
+                projections.Add(projection);
+
+            }
+
+            // Add each point that lies within the plane 
+            if (PlaneContainsPoint(projection))
+            {
+                //projections.Add(Vector3.ProjectOnPlane(root + vertex, plane.normal));
+                //print("Does contain " + projections[projections.Count - 1]);
+            }
+            else
+            {
+                //print("Does not contain point " + Vector3.ProjectOnPlane(root + vertex, plane.normal));
+            }
+            
+        }
+
+        //print("Length of projects: " + projections.Count + ". Comes from " + this.transform.position);
+        // If does not lie within the plane make sure to add edge intersections TODO****
+
+        return projections;
+    }
+
+    /// <summary>
+    /// Checks if a series of vertexes fit into the current plane 
+    /// </summary>
+    /// <param name="shape"></param>
+    /// <returns></returns>
+    public bool PlaneContainsShape(Shape shape)
+    {
+        bool contains = true;
+
+        // Go through each point and see if plane contains it 
+        foreach (Vector3 point in shape.Verticies)
+        {
+            if (!PlaneContainsPoint(point))
+            {
+                contains = false;
+                break;
+            }
+        }
+
+        return contains;
+    }
+
 
     /// <summary>
     /// If a point is within the plane formed by this quad.
@@ -230,6 +326,7 @@ public class QuadNode : MonoBehaviour
             Vector3.ProjectOnPlane(points[1].position, plane.normal),
             Vector3.ProjectOnPlane(points[2].position, plane.normal)
         };
+        /*
 
         Vector3[] triangleB = new Vector3[]
         {
@@ -238,33 +335,24 @@ public class QuadNode : MonoBehaviour
             Vector3.ProjectOnPlane(points[2].position, plane.normal)
         };
 
-        print(TriangleContainsPoint(point, triangleA) + " : " + TriangleContainsPoint(point, triangleB));
+        // 0 <= dot(AB,AM) <= dot(AB,AB) &&
+        // 0 <= dot(BC, BM) <= dot(BC, BC)
+        */
 
-        return TriangleContainsPoint(point, triangleA) || TriangleContainsPoint(point, triangleB);
+        var AB = triangleA[0] - triangleA[1];
+        var AM = triangleA[0] - point;
+        var BC = triangleA[1] - triangleA[2];
+        var BM = triangleA[1] - point;
+        var dotABAM = Vector3.Dot(AB, AM);
+        var dotABAB = Vector3.Dot(AB, AB);
+        var dotBCBM = Vector3.Dot(BC, BM);
+        var dotBCBC = Vector3.Dot(BC, BC);
+        return 0 <= dotABAM && dotABAM <= dotABAB && 0 <= dotBCBM && dotBCBM <= dotBCBC;
+
+        //return TriangleContainsPoint(point, triangleA) || TriangleContainsPoint(point, triangleB);
     }
 
-    /// <summary>
-    /// Checks if a series of vertexes fit into the current plane 
-    /// </summary>
-    /// <param name="shape"></param>
-    /// <returns></returns>
-    public bool PlaneContainsShape(Shape shape)
-    {
-        bool contains = true;
-        // stack overflow 
-
-        foreach (Vector3 point in shape.Verticies)
-        {
-            if (!PlaneContainsPoint(point))
-            {
-                contains = false;
-                break;
-            }
-        }
-
-        return contains;
-    }
-
+    
 
     /// <summary>
     /// Checks to see if a point in 3d space exists within or out of 3 vertices 
@@ -274,76 +362,39 @@ public class QuadNode : MonoBehaviour
     /// <returns></returns>
     private bool TriangleContainsPoint(Vector3 point, Vector3[] vertices)
     {
-        /*
-        a = ((y2 - y3) * (x - x3) + 
-        (x3 - x2) * (y - y3)) 
-        / 
-        ((y2 - y3) * (x1 - x3) + 
-        (x3 - x2) * (y1 - y3))
-
-        b = 
-        ((y3 - y1) * (x - x3) + 
-        (x1 - x3) * (y - y3)) 
-        / 
-        ((y2 - y3) * (x1 - x3) + 
-        (x3 - x2) * (y1 - y3))
-
-        c = 1 - a - b
-        */
-
-        float denom = (vertices[1].y - vertices[2].y) * (vertices[0].x - vertices[2].x) +
-                (vertices[2].x - vertices[1].x) * (vertices[0].z - vertices[2].z);
-
-
-        float a = (
-                ((vertices[1].z - vertices[2].z) * (point.x - vertices[2].x) +
-                (vertices[2].x - vertices[1].x) * (point.z - vertices[2].z)) 
-                /
-                (denom)
-            );
-
-        float b = (
-                ((vertices[2].z - vertices[0].z) * (point.x - vertices[2].x) +
-                (vertices[0].x - vertices[2].x) * (point.y - vertices[2].z))
-                /
-                (denom)
-            );
-
-        float c = 1 - a - b;
-
-        bool caseA = (0 <= a) && (a <= 1);
-        bool caseB = (0 <= b) && (b <= 1);
-        bool caseC = (0 <= c) && (c <= 1);
-
-        return caseA && caseB && caseC;
-    }
-
-    
-    /// <summary>
-    /// Simplifies the vertices to a represent a shape along the up most
-    /// plane. If vertices go out of up most plane they are cut 
-    /// </summary>
-    /// <param name="verticies"></param>
-    /// <returns></returns>
-    private List<Vector3> ProjectToPlane(Vector3 root, Vector3[] verticies)
-    {
-        List<Vector3> projections = new List<Vector3>();
-
-        foreach (Vector3 vertex in verticies)
+        if( SameSide(point, vertices[0], vertices[1], vertices[2]) && 
+            SameSide(point, vertices[1], vertices[0], vertices[2]) && 
+            SameSide(point, vertices[2], vertices[0], vertices[1]))
         {
-            // Add each point that lies within the plane 
-            print(Vector3.ProjectOnPlane(root + vertex, plane.normal));
-            if (PlaneContainsPoint(Vector3.ProjectOnPlane(root + vertex, plane.normal)))
-            {
-                projections.Add(Vector3.ProjectOnPlane(root + vertex, plane.normal));
-            }
+            return true;
         }
 
-        print("Length of projects: " + projections.Count);
-        // If does not lie within the plane make sure to add edge intersections TODO****
 
-        return projections;
+
+        return false;
+
     }
+
+    private bool SameSide(Vector3 p1, Vector3 p2, Vector3 a, Vector3 b)
+    {
+        Vector3 cp1 = Vector3.Cross(b - a, p1 - a);
+        Vector3 cp2 = Vector3.Cross(b - a, p2 - a);
+
+        //print(b - a);
+
+        if (Vector2.Dot(cp1, cp2) >= 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+
+
+
 
     void OnDrawGizmosSelected()
     {
@@ -355,6 +406,7 @@ public class QuadNode : MonoBehaviour
                 foreach (Vector3 point in shape.Verticies)
                 {
                     Gizmos.DrawWireSphere(point, 0.1f);
+                    //print(point);
                 }
             }
         }
@@ -371,7 +423,8 @@ public class QuadNode : MonoBehaviour
         private Vector3[] vertices;
 
         public Vector3 Root { get { return root; } }
-        public Vector3[] Verticies 
+        public Vector3[] Verticies { get { return vertices; } }
+        public Vector3[] VerticiesWithRoot 
         { 
             get 
             {
@@ -385,6 +438,7 @@ public class QuadNode : MonoBehaviour
                 return UsefulVerticies;
             } 
         }
+
 
         public Shape(Vector3 root, Vector3[] vertices)
         {
