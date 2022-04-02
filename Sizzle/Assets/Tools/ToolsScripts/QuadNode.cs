@@ -39,7 +39,6 @@ public class QuadNode : MonoBehaviour
         {
             shapesCount = shapes.Count;
         }
-
         //generate = false;
         if (generate)
         {
@@ -57,53 +56,38 @@ public class QuadNode : MonoBehaviour
             this.divisions = null;
 
             GenerateNodes();
-            print("Generated");
         }
     }
 
     public void GenerateNodes()
     {
         // Get all objects within the box 
-        Collider[] collisions = Physics.OverlapBox(this.transform.position, this.transform.localScale, this.transform.rotation, mask);
+        Collider[] collisions = Physics.OverlapBox(this.transform.position, this.transform.localScale / 2, this.transform.rotation, mask);
+        
         // Also need the root position
         Vector3[] planePositions = null;
 
-        int sum = 0;
+
         foreach (Collider col in collisions)
         {
             // Get verticies that actually exist in area 
             planePositions = ProjectToPlane(col.transform.position, col.GetComponent<MeshFilter>().sharedMesh.vertices).ToArray();
-            
-            sum += planePositions.Length;
-
-            foreach (Vector3 point in planePositions)
-            {
-                if (!PlaneContainsPoint(point))
-                {
-                    print(point);
-                }
-            }
-
             Add(new Shape( col.transform.position, planePositions));
         }
-        print(sum);
-        
     }
 
     public void Add(Shape shape)
     {
         // For each object get its verticies to see if box contains it 
         
-
-
         if(PlaneContainsShape(shape))
         {
             
             if (divisions == null || divisions.Length == 0)
             {
-                    shapes.Add(shape);
+                shapes.Add(shape);
 
-                if (shapes.Count + 1 >= MAXOBJBEFOREDIVIDE)
+                if (shapes.Count >= MAXOBJBEFOREDIVIDE)
                 {
                     Divide();
                 }
@@ -114,24 +98,26 @@ public class QuadNode : MonoBehaviour
                 QuadNode smallestNode = SmallestNode(shape);
 
                 // If null or self add to this node 
-                if (smallestNode == null || smallestNode == this)
+                if (smallestNode != null && smallestNode != this)
                 {
-                    shapes.Add(shape);
+
+                    smallestNode.Add(shape);
+                    
+                    shapes.Remove(shape);
                 }
                 else
                 {
-                    // else add to the child 
-                    smallestNode.shapes.Add(shape);
+                    shapes.Add(shape);
                 }
             }
-            }
-            else
-            {
-                shapes.Add(shape);
-            }
+        }
+        else
+        {
+            shapes.Add(shape);
+        }
     }
 
-    private void Divide()
+    public void Divide()
     {
         divisions = new QuadNode[4];
 
@@ -155,6 +141,7 @@ public class QuadNode : MonoBehaviour
                     Quaternion.identity
                 );
 
+                nodeTemp.GetComponent<QuadNode>().generate = false;
                 nodeTemp.GetComponent<QuadNode>().divisions = null;
                 nodeTemp.GetComponent<QuadNode>().shapes = new List<Shape>();
 
@@ -165,14 +152,14 @@ public class QuadNode : MonoBehaviour
                 divisions[x + (y * 2)] = nodeTemp.GetComponent<QuadNode>();
             }
         }
-
         for (int i = 0; i < shapes.Count; i++)
         {
+            print(SmallestNode(shapes[i]));
             if (PlaneContainsShape(shapes[i]))
             {
                 QuadNode smallest = SmallestNode(shapes[i]);
 
-                if (smallest != null || smallest != this)
+                if (smallest != null && smallest != this)
                 {
                     smallest.Add(shapes[i]);
                     this.shapes.RemoveAt(i);
@@ -193,12 +180,14 @@ public class QuadNode : MonoBehaviour
     {
         if (PlaneContainsShape(shape))
         {
+
             if (divisions != null)
             {
                 QuadNode quad = null;
                 // Iterate through each child to see if can fit into any of these
                 foreach (QuadNode child in divisions)
                 {
+
                     if (child.PlaneContainsShape(shape))
                     {
                         quad = child.SmallestNode(shape);
@@ -262,10 +251,12 @@ public class QuadNode : MonoBehaviour
 
             if (!projections.Contains(projection))
             {
-                projections.Add(projection);
-
+                if (PlaneContainsPoint(projection))
+                {
+                    projections.Add(projection);
+                }
             }
-
+            /*
             // Add each point that lies within the plane 
             if (PlaneContainsPoint(projection))
             {
@@ -276,7 +267,7 @@ public class QuadNode : MonoBehaviour
             {
                 //print("Does not contain point " + Vector3.ProjectOnPlane(root + vertex, plane.normal));
             }
-            
+            */
         }
 
         //print("Length of projects: " + projections.Count + ". Comes from " + this.transform.position);
@@ -293,6 +284,7 @@ public class QuadNode : MonoBehaviour
     public bool PlaneContainsShape(Shape shape)
     {
         bool contains = true;
+
 
         // Go through each point and see if plane contains it 
         foreach (Vector3 point in shape.Verticies)
@@ -326,79 +318,26 @@ public class QuadNode : MonoBehaviour
             Vector3.ProjectOnPlane(points[1].position, plane.normal),
             Vector3.ProjectOnPlane(points[2].position, plane.normal)
         };
-        /*
 
-        Vector3[] triangleB = new Vector3[]
-        {
-            Vector3.ProjectOnPlane(points[3].position, plane.normal),
-            Vector3.ProjectOnPlane(points[1].position, plane.normal),
-            Vector3.ProjectOnPlane(points[2].position, plane.normal)
-        };
 
-        // 0 <= dot(AB,AM) <= dot(AB,AB) &&
-        // 0 <= dot(BC, BM) <= dot(BC, BC)
-        */
-
-        var AB = triangleA[0] - triangleA[1];
-        var AM = triangleA[0] - point;
-        var BC = triangleA[1] - triangleA[2];
-        var BM = triangleA[1] - point;
-        var dotABAM = Vector3.Dot(AB, AM);
-        var dotABAB = Vector3.Dot(AB, AB);
-        var dotBCBM = Vector3.Dot(BC, BM);
-        var dotBCBC = Vector3.Dot(BC, BC);
+        Vector3 AB = triangleA[0] - triangleA[1];
+        Vector3 AM = triangleA[0] - point;
+        Vector3 BC = triangleA[1] - triangleA[2];
+        Vector3 BM = triangleA[1] - point;
+        float dotABAM = Vector3.Dot(AB, AM);
+        float dotABAB = Vector3.Dot(AB, AB);
+        float dotBCBM = Vector3.Dot(BC, BM);
+        float dotBCBC = Vector3.Dot(BC, BC);
         return 0 <= dotABAM && dotABAM <= dotABAB && 0 <= dotBCBM && dotBCBM <= dotBCBC;
-
-        //return TriangleContainsPoint(point, triangleA) || TriangleContainsPoint(point, triangleB);
     }
-
-    
-
-    /// <summary>
-    /// Checks to see if a point in 3d space exists within or out of 3 vertices 
-    /// </summary>
-    /// <param name="point"></param>
-    /// <param name="vertices"></param>
-    /// <returns></returns>
-    private bool TriangleContainsPoint(Vector3 point, Vector3[] vertices)
-    {
-        if( SameSide(point, vertices[0], vertices[1], vertices[2]) && 
-            SameSide(point, vertices[1], vertices[0], vertices[2]) && 
-            SameSide(point, vertices[2], vertices[0], vertices[1]))
-        {
-            return true;
-        }
-
-
-
-        return false;
-
-    }
-
-    private bool SameSide(Vector3 p1, Vector3 p2, Vector3 a, Vector3 b)
-    {
-        Vector3 cp1 = Vector3.Cross(b - a, p1 - a);
-        Vector3 cp2 = Vector3.Cross(b - a, p2 - a);
-
-        //print(b - a);
-
-        if (Vector2.Dot(cp1, cp2) >= 0)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-
 
 
 
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(this.transform.position, this.transform.localScale);
+
         if(shapes != null)
         {
             foreach (Shape shape in shapes)
@@ -412,7 +351,7 @@ public class QuadNode : MonoBehaviour
         }
         else
         {
-            print("Shapes is null");
+            // print("Shapes is null");
         }
         
     }
