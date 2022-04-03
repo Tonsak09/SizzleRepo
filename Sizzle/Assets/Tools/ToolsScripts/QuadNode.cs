@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteInEditMode]
 public class QuadNode : MonoBehaviour
 {
 
@@ -19,16 +18,25 @@ public class QuadNode : MonoBehaviour
     public GameObject quadNodePrefab;
     public int shapesCount = 0;
 
+    public Vector3 xAxis { get { return (points[1].position - points[2].position).normalized; } }
+    public Vector3 yAxis { get { return (points[0].position - points[1].position).normalized; } }
+
+
     public bool generate;
 
     // Just so doesn't appear in the editor but still accesible by other scripts 
     public List<Shape> Shapes { get { return shapes; } set { shapes = value; } }
-    private Plane plane 
+    public Plane plane 
     { 
         get 
         {
             return new Plane(points[0].position, points[1].position, points[2].position);
         }
+    }
+
+    private void Start()
+    {
+        
     }
 
     // Update is called once per frame
@@ -39,6 +47,7 @@ public class QuadNode : MonoBehaviour
         {
             shapesCount = shapes.Count;
         }
+
         //generate = false;
         if (generate)
         {
@@ -63,8 +72,6 @@ public class QuadNode : MonoBehaviour
     {
         // Get all objects within the box 
         Collider[] collisions = Physics.OverlapBox(this.transform.position, this.transform.localScale / 2, this.transform.rotation, mask);
-
-        print(collisions.Length);
 
         // Also need the root position
         Vector3[] planePositions = null;
@@ -126,8 +133,7 @@ public class QuadNode : MonoBehaviour
         // Works because it comes from a unit cube 
         Vector3 root = points[2].position; //this.transform.position - (this.transform.localScale / 2);
 
-        Vector3 xAxis = points[0].position - points[2].position;
-        Vector3 yAxis = points[0].position - points[1].position;
+        
 
         // Split up and allign position with vector from pos[0]
         for (int x = 0; x < 2; x++)
@@ -152,7 +158,10 @@ public class QuadNode : MonoBehaviour
                 //this.transform.position += nodeTemp.transform.localScale.y * y * yAxis;
 
                 nodeTemp.transform.position += (nodeTemp.transform.localScale.y) * plane.normal;
-                
+                nodeTemp.transform.localScale += Vector3.up * nodeTemp.transform.localScale.y;
+
+                nodeTemp.transform.position += yAxis * nodeTemp.transform.localScale.z / 2 + (y * yAxis * nodeTemp.transform.localScale.z);
+                nodeTemp.transform.position += xAxis * nodeTemp.transform.localScale.x / 2 + (x * xAxis * nodeTemp.transform.localScale.x);
 
                 divisions[x + (y * 2)] = nodeTemp.GetComponent<QuadNode>();
             }
