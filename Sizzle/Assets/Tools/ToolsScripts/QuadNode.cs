@@ -63,7 +63,9 @@ public class QuadNode : MonoBehaviour
     {
         // Get all objects within the box 
         Collider[] collisions = Physics.OverlapBox(this.transform.position, this.transform.localScale / 2, this.transform.rotation, mask);
-        
+
+        print(collisions.Length);
+
         // Also need the root position
         Vector3[] planePositions = null;
 
@@ -122,7 +124,10 @@ public class QuadNode : MonoBehaviour
         divisions = new QuadNode[4];
 
         // Works because it comes from a unit cube 
-        Vector3 root = this.transform.position - (this.transform.localScale / 2);
+        Vector3 root = points[2].position; //this.transform.position - (this.transform.localScale / 2);
+
+        Vector3 xAxis = points[0].position - points[2].position;
+        Vector3 yAxis = points[0].position - points[1].position;
 
         // Split up and allign position with vector from pos[0]
         for (int x = 0; x < 2; x++)
@@ -131,15 +136,10 @@ public class QuadNode : MonoBehaviour
             {
 
                 // Centers new node in middle of quadrant but same z axis
-                GameObject nodeTemp = Instantiate(quadNodePrefab, root +
-                    new Vector3
-                    (
-                        x * (this.transform.localScale.x / 2) + (this.transform.localScale.x / 4), 
-                        0,//y * (this.transform.localScale.y / 2) +(this.transform.localScale.y / 4),
-                        y * (this.transform.localScale.z / 2) + (this.transform.localScale.z / 4)
-                    ), 
-                    Quaternion.identity
-                );
+                GameObject nodeTemp = Instantiate(quadNodePrefab, root,
+                    this.transform.rotation
+                ); ;
+
 
                 nodeTemp.GetComponent<QuadNode>().generate = false;
                 nodeTemp.GetComponent<QuadNode>().divisions = null;
@@ -147,14 +147,18 @@ public class QuadNode : MonoBehaviour
 
                 // Does not need to affect z axis**** 
                 nodeTemp.transform.localScale /= 2;
-                nodeTemp.transform.position += (nodeTemp.transform.localScale.y / 2) * plane.normal;
+
+                //this.transform.position += nodeTemp.transform.localScale.x * x * xAxis;
+                //this.transform.position += nodeTemp.transform.localScale.y * y * yAxis;
+
+                nodeTemp.transform.position += (nodeTemp.transform.localScale.y) * plane.normal;
+                
 
                 divisions[x + (y * 2)] = nodeTemp.GetComponent<QuadNode>();
             }
         }
         for (int i = 0; i < shapes.Count; i++)
         {
-            print(SmallestNode(shapes[i]));
             if (PlaneContainsShape(shapes[i]))
             {
                 QuadNode smallest = SmallestNode(shapes[i]);
@@ -230,6 +234,10 @@ public class QuadNode : MonoBehaviour
                     }
                 }
             }
+        }
+        else
+        {
+            nodes.Add(this);
         }
 
         return nodes;
@@ -336,7 +344,6 @@ public class QuadNode : MonoBehaviour
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawWireCube(this.transform.position, this.transform.localScale);
 
         if(shapes != null)
         {
