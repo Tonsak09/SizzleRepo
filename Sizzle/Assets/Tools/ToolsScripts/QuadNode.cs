@@ -348,6 +348,104 @@ public class QuadNode : MonoBehaviour
         return 0 <= dotABAM && dotABAM <= dotABAB && 0 <= dotBCBM && dotBCBM <= dotBCBC;
     }
 
+    public Vector3 MoveAlongTile(Vector3 point, Player player)
+    {
+        // Sets up Movealongtile with correct values but also means that 
+        // working with the player class is less confusing 
+        return MoveAlongTile(Vector3.ProjectOnPlane(point, plane.normal), Vector3.ProjectOnPlane(player.transform.position, plane.normal), player);
+    }
+
+    /// <summary>
+    /// Returns the next possible positions that player can be 
+    /// </summary>
+    /// <param name="point">MUST be projected onto the plane</param>
+    /// <param name="player"></param>
+    /// <returns></returns>
+    private Vector3 MoveAlongTile(Vector3 point, Vector3 origin, Player player)
+    {
+        List<QuadNode> quadsPointExistsIn = GetQuadsThatPointExists(point);
+        Vector3 nextPoint = Vector3.negativeInfinity; // Default value 
+
+        
+        if(!PlaneContainsPoint(point))
+        { 
+            // Check if neighbor tile in that direction 
+
+            // If not reflect player off edge and repeat function with new point and origin from edge 
+        }
+
+        foreach (QuadNode quad in quadsPointExistsIn)
+        {
+            foreach (Shape shape in quad.shapes) 
+            {
+                if(ShapeContainsPoint(point, shape)) // Cannot currently work with overlaping obstacles 
+                {
+                    // Check where the collision takes places and reflect of that 
+
+                    // Find side where intersection happens 
+                    Vector3 travelLine = point - origin;
+
+                    //Vector3 intersection = GetIntersectionPoint(travelLine, shape);
+                    //float newMag = travelLine.magnitude - (intersection - origin).magnitude;
+
+                    // Whip camera around to new direction 
+
+                    break;
+                }
+            }
+
+            if(nextPoint != Vector3.negativeInfinity)
+            {
+                break;
+            }
+
+        }
+
+        // No intersections or collisions 
+        if(nextPoint == Vector3.negativeInfinity)
+        {
+            return point;
+        }
+
+        return nextPoint;
+
+    }
+
+    public List<QuadNode> GetQuadsThatPointExists(Vector3 point)
+    {
+        List<QuadNode> nodes = new List<QuadNode>();
+        if(PlaneContainsPoint(point))
+        {
+            nodes.Add(this);
+            if (divisions != null)
+            {
+                foreach (QuadNode node in divisions)
+                {
+                    List<QuadNode> childNodes = node.GetQuadsThatPointExists(point);
+                    if(childNodes != null)
+                    {
+                        nodes.AddRange(childNodes);
+                        break;
+                    }
+                }
+            }
+
+            return nodes;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    private bool ShapeContainsPoint(Vector3 point, Shape shape)
+    {
+        // Check if there are enough verticies
+
+        // Project to xz plane
+
+        return true;
+    }
 
 
     void OnDrawGizmosSelected()
@@ -361,15 +459,9 @@ public class QuadNode : MonoBehaviour
                 foreach (Vector3 point in shape.Verticies)
                 {
                     Gizmos.DrawWireSphere(point, 0.1f);
-                    //print(point);
                 }
             }
         }
-        else
-        {
-            // print("Shapes is null");
-        }
-        
     }
 
     public struct Shape
