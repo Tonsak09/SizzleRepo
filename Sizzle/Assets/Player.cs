@@ -12,6 +12,8 @@ public class Player : MonoBehaviour
     public float speed;
     public Vector3 direction;
 
+    public Transform head;
+
 
     // Start is called before the first frame update
     void Start()
@@ -36,30 +38,45 @@ public class Player : MonoBehaviour
     private void Move()
     {
         // Rotation
-        if (Input.GetKey(KeyCode.D))
+        if (Input.GetKey(KeyCode.A))
         {
-            direction += Quaternion.AngleAxis(rotationSpeed * Time.deltaTime, curentParentTile.plane.normal).eulerAngles;
+            direction = new Vector3(
+                direction.x * Mathf.Cos(speed * Time.deltaTime) - direction.z * Mathf.Sin(speed * Time.deltaTime),
+                0,
+                direction.x * Mathf.Sin(speed * Time.deltaTime) + direction.z * Mathf.Cos(speed * Time.deltaTime));
         }
-        else if (Input.GetKey(KeyCode.A))
+        else if (Input.GetKey(KeyCode.D))
         {
-            direction -= Quaternion.AngleAxis(rotationSpeed * Time.deltaTime, curentParentTile.plane.normal).eulerAngles;
+            direction = new Vector3(
+                direction.x * Mathf.Cos(-speed * Time.deltaTime) - direction.z * Mathf.Sin(-speed * Time.deltaTime),
+                0,
+                direction.x * Mathf.Sin(-speed * Time.deltaTime) + direction.z * Mathf.Cos(-speed * Time.deltaTime));
         }
+       
 
         Vector3 moveAmount = Vector3.zero;
-        if(Input.GetKey(KeyCode.W))
+        if (Input.GetKey(KeyCode.W))
         {
-            Vector3 newDir = direction.normalized;
+            Vector3 newDir = Vector3.ProjectOnPlane(direction, curentParentTile.plane.normal);
             moveAmount += newDir * speed * Time.deltaTime;
+
+            head.transform.rotation = Quaternion.LookRotation(newDir, curentParentTile.plane.normal);
         }
-        else if(Input.GetKey(KeyCode.S))
+        else if (Input.GetKey(KeyCode.S))
         {
-            Vector3 newDir =-direction.normalized;
+            Vector3 newDir = Vector3.ProjectOnPlane(-direction, curentParentTile.plane.normal);
             moveAmount += newDir * speed * Time.deltaTime;
+
+            head.transform.rotation = Quaternion.LookRotation(newDir, curentParentTile.plane.normal);
+        }
+        else
+        {
+            head.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
         }
 
-        
+        print(curentParentTile.PlaneContainsPoint(Vector3.ProjectOnPlane(this.transform.position + moveAmount, curentParentTile.plane.normal)));
 
-        if(moveAmount != Vector3.zero)
+        if (moveAmount != Vector3.zero)
         {
             this.transform.position += moveAmount;
 
@@ -67,5 +84,13 @@ public class Player : MonoBehaviour
 
             //this.transform.position = curentParentTile.MoveAlongTile(this.transform.position + moveAmount, this);
         }
+
+        
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.white;
+        Gizmos.DrawLine(this.transform.position, this.transform.position + direction);
     }
 }

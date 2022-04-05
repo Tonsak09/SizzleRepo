@@ -359,6 +359,7 @@ public class QuadNode : MonoBehaviour
     /// Returns the next possible positions that player can be 
     /// </summary>
     /// <param name="point">MUST be projected onto the plane</param>
+    /// <param name="origin">The position where the player begins the move action</param>
     /// <param name="player"></param>
     /// <returns></returns>
     private Vector3 MoveAlongTile(Vector3 point, Vector3 origin, Player player)
@@ -385,10 +386,15 @@ public class QuadNode : MonoBehaviour
                     // Find side where intersection happens 
                     Vector3 travelLine = point - origin;
 
-                    //Vector3 intersection = GetIntersectionPoint(travelLine, shape);
+                    Vector3 intersection = GetIntersectionPoint(origin, travelLine, shape);
                     //float newMag = travelLine.magnitude - (intersection - origin).magnitude;
 
                     // Whip camera around to new direction 
+
+
+
+
+                    // For now just set point to intersection 
 
                     break;
                 }
@@ -414,6 +420,7 @@ public class QuadNode : MonoBehaviour
     public List<QuadNode> GetQuadsThatPointExists(Vector3 point)
     {
         List<QuadNode> nodes = new List<QuadNode>();
+        
         if(PlaneContainsPoint(point))
         {
             nodes.Add(this);
@@ -445,6 +452,69 @@ public class QuadNode : MonoBehaviour
         // Project to xz plane
 
         return true;
+    }
+
+    private Vector3 GetIntersectionPoint(Vector3 origin, Vector3 offsetA, Shape shape)
+    {
+        // Must get the first two closest points in the shape 
+        Vector3 closestA = shape.Verticies[0];
+        Vector3 closestB = shape.Verticies[1];
+
+        if(Vector3.Distance(origin, closestA) > Vector3.Distance(origin, closestB))
+        {
+            // Swap
+            Vector3 temp = closestA;
+            closestA = closestB;
+            closestB = temp;
+        }
+
+        // Todo -> Change to getting closeset side in non cubic shapes **********
+        for (int i = 2; i < shape.Verticies.Length; i++)
+        {
+            float distance = Vector3.Distance(origin, shape.Verticies[i]);
+
+            if(distance < Vector3.Distance(origin, closestA))
+            {
+                closestA = shape.Verticies[i];
+            }
+            else if(distance < Vector3.Distance(origin, closestB))
+            {
+                closestB = shape.Verticies[i];
+            }
+        }
+
+        Vector3 offsetB = closestA - closestB;
+
+        // Now we have the closest side towards the origin 
+        // Since we know for a fact that when this is called there is an intersection we can find
+        // it here 
+
+        // startA.x + t * offsetA.x = startB.x + u * offsetB.x
+        // startA.z + t * offsetA.z = startB.z + u * offsetB.z
+
+        // offsetA.x(t) - offsetB.x(u) = startB.x - startA.x
+        // offsetA.z(t) - OffsetB.z(u) = startB.z - startA.z
+
+        float[,] matrix2x2 = new float[2, 2];
+
+        matrix2x2[0, 0] = offsetA.x; // A
+        matrix2x2[1, 0] = -offsetB.x;// B
+        matrix2x2[0, 1] = offsetA.z; // C
+        matrix2x2[1, 1] = -offsetB.z;// D
+
+        Vector2 B = new Vector2(closestB.x - origin.x, closestB.z - origin.z);
+
+        float det = (matrix2x2[0, 0] * matrix2x2[1, 1]) - (matrix2x2[1, 0] * matrix2x2[0, 1]);
+
+        // Get inverse of matrix 
+        
+
+        return new Vector3();
+    }
+
+    private void InverseMatrix2x2(float[,] matrix, float det)
+    {
+
     }
 
 
