@@ -395,6 +395,7 @@ public class QuadNode : MonoBehaviour
 
 
                     // For now just set point to intersection 
+                    nextPoint = intersection;
 
                     break;
                 }
@@ -413,6 +414,8 @@ public class QuadNode : MonoBehaviour
             return point;
         }
 
+        // Returns this value if position has been changed to match with edge
+        // or collision 
         return nextPoint;
 
     }
@@ -502,19 +505,35 @@ public class QuadNode : MonoBehaviour
         matrix2x2[0, 1] = offsetA.z; // C
         matrix2x2[1, 1] = -offsetB.z;// D
 
-        Vector2 B = new Vector2(closestB.x - origin.x, closestB.z - origin.z);
+        // Vector on other side of equation 
+        Vector2 B = new Vector2(closestB.x - origin.x, closestB.z - origin.z); 
 
         float det = (matrix2x2[0, 0] * matrix2x2[1, 1]) - (matrix2x2[1, 0] * matrix2x2[0, 1]);
 
         // Get inverse of matrix 
-        
+        InverseMatrix2x2(matrix2x2, det);
 
-        return new Vector3();
+        // Matrix x Vector 
+        // (m[0, 0] * B[0]) + (m[0, 1] * b[1]) = t 
+        // (m[1, 0] * B[0]) + (m[1, 1] * b[1]) = u
+
+        float t = (matrix2x2[0, 0] * B[0]) + (matrix2x2[0, 1] * B[1]);
+        float u = (matrix2x2[1, 0] * B[0]) + (matrix2x2[1, 1] * B[1]);
+
+
+        return origin + offsetA * t;
     }
 
     private void InverseMatrix2x2(float[,] matrix, float det)
     {
+        // Swap A and D 
+        float hold = matrix[0, 0];
+        matrix[0, 0] = matrix[1, 1] / det;
+        matrix[1, 1] = hold / det;
 
+        // Make B and C negative 
+        matrix[1, 0] = -matrix[1, 0] / det;
+        matrix[0, 1] = -matrix[0, 1] / det;
     }
 
 
