@@ -27,6 +27,8 @@ public class Player : MonoBehaviour
 
     public Vector3 direction;
 
+    public GameObject sparkFX;
+
     public Transform head;
     public Transform grabPoint;
 
@@ -58,7 +60,9 @@ public class Player : MonoBehaviour
             case PlayerStates.Idle:
                 // Play idle animation 
 
-                if(Move(defaultSpeed))
+                Spark();
+
+                if (Move(defaultSpeed))
                 {
                     state = PlayerStates.DefaultMove;
                 }
@@ -68,10 +72,13 @@ public class Player : MonoBehaviour
                     state = PlayerStates.HoldIdle;
                 }
 
+
                 break;
             case PlayerStates.DefaultMove:
 
-                if(!Move(defaultSpeed))
+                Spark();
+
+                if (!Move(defaultSpeed))
                 {
                     state = PlayerStates.Idle;
                 }
@@ -277,6 +284,14 @@ public class Player : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void Spark()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            Instantiate(sparkFX, grabPoint.position, head.transform.rotation);
+        }
     }
 
     private void OnDrawGizmos()

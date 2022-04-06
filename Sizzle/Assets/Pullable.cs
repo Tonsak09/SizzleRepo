@@ -11,7 +11,10 @@ public class Pullable : MonoBehaviour
         released
     };
 
-    private PullableStates state;   
+    private PullableStates state;
+
+    public QuadNode quadParent;
+
 
     // Start is called before the first frame update
     void Start()
