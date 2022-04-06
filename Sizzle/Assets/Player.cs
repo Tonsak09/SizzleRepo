@@ -141,7 +141,16 @@ public class Player : MonoBehaviour
     {
         bool isMoving = false;
         // Turning 
-        isMoving = Rotate(rotationSpeed) || DefaultMove(speed);
+        isMoving = Rotate(rotationSpeed);
+        if(isMoving == false)
+        {
+            isMoving = DefaultMove(speed);
+        }
+        else
+        {
+            DefaultMove(speed);
+        }
+        
 
         return isMoving;
     }
