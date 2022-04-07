@@ -307,6 +307,6 @@ public class Player : MonoBehaviour
     {
         Gizmos.color = Color.white;
         Gizmos.DrawLine(this.transform.position, this.transform.position + direction);
-
+        Gizmos.DrawCube(grabPoint.position, Vector3.one);
     }
 }
