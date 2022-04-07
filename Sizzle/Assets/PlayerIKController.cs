@@ -59,7 +59,7 @@ public class PlayerIKController : MonoBehaviour
     void Update()
     {
         // Need to accomodate planes with different normals
-        //head[1].position = root.transform.position + headFrontOffset;
+        head[1].position = root.transform.position + player.curentParentTile.plane.normal * headBacktOffset.magnitude;
         print(headFrontOffset);
         foreach (Transform[] part in bodyChain)
         {
