@@ -41,9 +41,13 @@ public class Player : MonoBehaviour
     private Transform pullable;
     private ParticleSystem blockSparks;
 
+    private Transform[][] bodyChain;
+
     // Start is called before the first frame update
     void Start()
     {
+        bodyChain = this.GetComponent<PlayerIKController>().BodyChain;
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
@@ -52,14 +56,17 @@ public class Player : MonoBehaviour
 
         direction = Vector3.ProjectOnPlane(Vector3.right, curentParentTile.plane.normal).normalized;
 
-        a = defaultSpeed * timeToMaxSpeed;
+        a = defaultSpeed / timeToMaxSpeed;
     }
 
     // Update is called once per frame
     void Update()
     {
         //direction = (Vector3.ProjectOnPlane(this.transform.position, Vector3.up) - Vector3.ProjectOnPlane(cam.position, Vector3.up)).normalized;
-        print(realSpeed.magnitude);
+
+        // Always make sure that the head is within a certain range direction from the center and can't just completely turn around 
+        AdjustAngles();
+
         switch (state)
         {
             case PlayerStates.Idle:
@@ -72,7 +79,7 @@ public class Player : MonoBehaviour
                     state = PlayerStates.DefaultMove;
                 }
 
-                if(Hold())
+                if (Hold())
                 {
                     state = PlayerStates.HoldIdle;
                 }
@@ -88,7 +95,7 @@ public class Player : MonoBehaviour
                     state = PlayerStates.Idle;
                 }
 
-                if(Hold())
+                if (Hold())
                 {
                     state = PlayerStates.HoldMove;
                 }
@@ -104,12 +111,12 @@ public class Player : MonoBehaviour
                 break;
             case PlayerStates.HoldIdle:
 
-                if(!Hold())
+                if (!Hold())
                 {
                     state = PlayerStates.Idle;
                 }
 
-                if(HoldMove(holdSpeed, grabbedPlane))
+                if (HoldMove(holdSpeed, grabbedPlane))
                 {
                     state = PlayerStates.HoldMove;
                 }
@@ -117,7 +124,7 @@ public class Player : MonoBehaviour
                 break;
             case PlayerStates.HoldMove:
 
-                if(!blockSparks.isPlaying)
+                if (!blockSparks.isPlaying)
                 {
                     blockSparks.Play();
                 }
@@ -129,7 +136,7 @@ public class Player : MonoBehaviour
                     blockSparks.Stop();
                 }
 
-                if(!Hold())
+                if (!Hold())
                 {
                     state = PlayerStates.DefaultMove;
                     blockSparks.Stop();
@@ -139,6 +146,30 @@ public class Player : MonoBehaviour
                 break;
             default:
                 break;
+        }
+    }
+
+    /// <summary>
+    /// Adjust the angle for each body part.
+    /// Returns the new angle if necessary 
+    /// </summary>
+    /// <param name="angleMax"></param>
+    /// <returns></returns>
+    private void AdjustAngles(float angleMax)
+    {
+        for (int i = 0; i < bodyChain.Length; i++)
+        {
+            if (i + 1 < bodyChain.Length)
+            {
+                Vector3 normal = bodyChain[i + 1][0].position - bodyChain[i + 1][1].position;
+                Vector3 newVec = bodyChain[i][0].position - bodyChain[i][1].position;
+
+                // Checks if angle between two vectors is greater than angleMax 
+                if (Mathf.Acos(Vector3.Dot(normal, newVec) / (Vector3.Magnitude(normal) * Vector3.Magnitude(newVec))) > angleMax)
+                {
+
+                }
+            }
         }
     }
 
@@ -173,10 +204,14 @@ public class Player : MonoBehaviour
         }
         else if (Input.GetKey(KeyCode.S))
         {
+            // Backwards movement is pretty buggy 
+
+            /*
             Vector3 newDir = Vector3.ProjectOnPlane(-direction, curentParentTile.plane.normal);
             realSpeed += newDir * a * Time.deltaTime;
 
             head.transform.rotation = Quaternion.LookRotation(direction, curentParentTile.plane.normal);
+            */
         }
         else
         {

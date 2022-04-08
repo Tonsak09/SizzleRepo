@@ -34,6 +34,8 @@ public class PlayerIKController : MonoBehaviour
 
     private Dictionary<Transform[], float> PairDistance;
     
+    // Allows player class to control angles 
+    public Transform[][] BodyChain { get { return bodyChain; } }
 
     private void Awake()
     {
@@ -60,11 +62,9 @@ public class PlayerIKController : MonoBehaviour
     {
         // Need to accomodate planes with different normals
         head[1].position = root.transform.position + player.curentParentTile.plane.normal * headBacktOffset.magnitude;
-        print(headFrontOffset);
         foreach (Transform[] part in bodyChain)
         {
             UpdateChainPart(part);
-            print(part);
         }
 
     }
@@ -81,5 +81,6 @@ public class PlayerIKController : MonoBehaviour
             Vector3 vec = (part[1].position - part[0].position).normalized;
             part[1].position -= vec * change;
         }
+        
     }
 }
