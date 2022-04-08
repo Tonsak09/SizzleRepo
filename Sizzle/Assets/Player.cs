@@ -65,7 +65,7 @@ public class Player : MonoBehaviour
         //direction = (Vector3.ProjectOnPlane(this.transform.position, Vector3.up) - Vector3.ProjectOnPlane(cam.position, Vector3.up)).normalized;
 
         // Always make sure that the head is within a certain range direction from the center and can't just completely turn around 
-        AdjustAngles();
+        //AdjustAngles();
 
         switch (state)
         {
