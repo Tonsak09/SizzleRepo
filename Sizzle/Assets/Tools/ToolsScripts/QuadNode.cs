@@ -398,6 +398,11 @@ public class QuadNode : MonoBehaviour
 
         foreach (QuadNode quad in quadsPointExistsIn)
         {
+            if(quad.shapes == null)
+            {
+                break;
+            }
+
             foreach (Shape shape in quad.shapes) 
             {
                 if(ShapeContainsPoint(projectedPoint, shape)) // Cannot currently work with overlaping obstacles 
