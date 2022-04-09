@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static Maths;
 
 public class QuadNode : MonoBehaviour
 {
@@ -18,9 +19,13 @@ public class QuadNode : MonoBehaviour
     public GameObject quadNodePrefab;
     public int shapesCount = 0;
 
+    public QuadNode sideANeighbors;
+    public QuadNode sideBNeighbors;
+    public QuadNode sideCNeighbors;
+    public QuadNode sideDNeighbors;
+
     public Vector3 xAxis { get { return (points[1].position - points[2].position).normalized; } }
     public Vector3 yAxis { get { return (points[0].position - points[1].position).normalized; } }
-
 
     public bool generate;
 
@@ -32,11 +37,6 @@ public class QuadNode : MonoBehaviour
         {
             return new Plane(points[0].position, points[1].position, points[2].position);
         }
-    }
-
-    private void Start()
-    {
-        
     }
 
     // Update is called once per frame
@@ -74,13 +74,13 @@ public class QuadNode : MonoBehaviour
         Collider[] collisions = Physics.OverlapBox(this.transform.position, this.transform.localScale / 2, this.transform.rotation, mask);
 
         // Also need the root position
-        Vector3[] planePositions = null;
+        List<Vector3> planePositions = null;
 
 
         foreach (Collider col in collisions)
         {
             // Get verticies that actually exist in area 
-            planePositions = ProjectToPlane(col.transform.position, col.GetComponent<MeshFilter>().sharedMesh.vertices).ToArray();
+            planePositions = GenerateHull(col.transform.position, col.GetComponent<MeshFilter>().sharedMesh.vertices);
             Add(new Shape( col.transform.position, planePositions));
         }
     }
@@ -258,7 +258,7 @@ public class QuadNode : MonoBehaviour
     /// </summary>
     /// <param name="verticies"></param>
     /// <returns></returns>
-    private List<Vector3> ProjectToPlane(Vector3 root, Vector3[] verticies)
+    private List<Vector3> GenerateHull(Vector3 root, Vector3[] verticies)
     {
         List<Vector3> projections = new List<Vector3>();
 
@@ -268,7 +268,7 @@ public class QuadNode : MonoBehaviour
 
             if (!projections.Contains(projection))
             {
-                if (PlaneContainsPoint(projection))
+                if (PlaneContainsPoint(points, plane.normal, projection))
                 {
                     projections.Add(projection);
                 }
@@ -306,7 +306,7 @@ public class QuadNode : MonoBehaviour
         // Go through each point and see if plane contains it 
         foreach (Vector3 point in shape.Verticies)
         {
-            if (!PlaneContainsPoint(point))
+            if (!PlaneContainsPoint(points, plane.normal, point))
             {
                 contains = false;
                 break;
@@ -317,76 +317,98 @@ public class QuadNode : MonoBehaviour
     }
 
 
-    /// <summary>
-    /// If a point is within the plane formed by this quad.
-    /// </summary>
-    /// <param name="point"></param>
-    /// <returns></returns>
-    public bool PlaneContainsPoint(Vector3 point)
-    {
-        // See if within bounds of points 
-
-        // At this stage every point has been projected onto the plane 
-
-        // Solve by splitting the plane into two triangles and finding if the point is within them 
-        Vector3[] triangleA = new Vector3[]
-        {
-            Vector3.ProjectOnPlane(points[0].position, plane.normal),
-            Vector3.ProjectOnPlane(points[1].position, plane.normal),
-            Vector3.ProjectOnPlane(points[2].position, plane.normal)
-        };
-
-
-        Vector3 AB = triangleA[0] - triangleA[1];
-        Vector3 AM = triangleA[0] - point;
-        Vector3 BC = triangleA[1] - triangleA[2];
-        Vector3 BM = triangleA[1] - point;
-        float dotABAM = Vector3.Dot(AB, AM);
-        float dotABAB = Vector3.Dot(AB, AB);
-        float dotBCBM = Vector3.Dot(BC, BM);
-        float dotBCBC = Vector3.Dot(BC, BC);
-        return 0 <= dotABAM && dotABAM <= dotABAB && 0 <= dotBCBM && dotBCBM <= dotBCBC;
-    }
+    
 
     public Vector3 MoveAlongTile(Vector3 point, Player player)
     {
         // Sets up Movealongtile with correct values but also means that 
         // working with the player class is less confusing 
-        return MoveAlongTile(Vector3.ProjectOnPlane(point, plane.normal), Vector3.ProjectOnPlane(player.transform.position, plane.normal), player);
+        return MoveAlongTile(Vector3.ProjectOnPlane(point, plane.normal), Vector3.ProjectOnPlane(player.transform.position, plane.normal), player.transform.localPosition, player);
     }
 
     /// <summary>
     /// Returns the next possible positions that player can be 
     /// </summary>
-    /// <param name="point">MUST be projected onto the plane</param>
-    /// <param name="origin">The position where the player begins the move action</param>
+    /// <param name="projectedPoint">MUST be projected onto the plane</param>
+    /// <param name="projectedOrigin">The position where the player begins the move action</param>
     /// <param name="player"></param>
     /// <returns></returns>
-    private Vector3 MoveAlongTile(Vector3 point, Vector3 origin, Player player)
+    private Vector3 MoveAlongTile(Vector3 projectedPoint, Vector3 projectedOrigin, Vector3 realOrigin, Player player)
     {
-        List<QuadNode> quadsPointExistsIn = GetQuadsThatPointExists(point);
-        Vector3 nextPoint = Vector3.negativeInfinity; // Default value 
+        List<QuadNode> quadsPointExistsIn = GetQuadsThatPointExists(projectedPoint);
+
+        if(quadsPointExistsIn == null)
+        {
+            quadsPointExistsIn = new List<QuadNode>();
+            quadsPointExistsIn.Add(this);
+        }
+
+        Vector3 nextPoint = Vector3.zero; // Default value 
 
         
-        if(!PlaneContainsPoint(point))
-        { 
+        if(!PlaneContainsPoint(points, plane.normal, projectedPoint))
+        {
             // Check if neighbor tile in that direction 
+            Vector3 dirFromQuad = projectedPoint - this.transform.position;
+
+            // Find greatest axis direction 
+            if(Mathf.Abs(dirFromQuad.x) > Mathf.Abs(dirFromQuad.z))
+            {
+                if(dirFromQuad.x > 0)
+                {
+                    if(sideANeighbors != null)
+                    {
+                        player.curentParentTile = sideANeighbors;
+                        player.realSpeed = Vector3.ProjectOnPlane(player.realSpeed, sideANeighbors.plane.normal);
+                    }
+                }
+                else
+                {
+                    if (sideBNeighbors != null)
+                    {
+                        player.curentParentTile = sideBNeighbors;
+                        player.realSpeed = Vector3.ProjectOnPlane(player.realSpeed, sideBNeighbors.plane.normal);
+                    }
+                }
+            }
+            else
+            {
+                if(dirFromQuad.z > 0)
+                {
+                    if (sideCNeighbors != null)
+                    {
+                        player.curentParentTile = sideCNeighbors;
+                        player.realSpeed = Vector3.ProjectOnPlane(player.realSpeed, sideCNeighbors.plane.normal);
+                    }
+                }
+                else
+                {
+                    if (sideDNeighbors != null)
+                    {
+                        player.curentParentTile = sideDNeighbors;
+                        player.realSpeed = Vector3.ProjectOnPlane(player.realSpeed, sideDNeighbors.plane.normal);
+                    }
+                }
+            }
+
 
             // If not reflect player off edge and repeat function with new point and origin from edge 
+            //nextPoint = Vector3.ProjectOnPlane(realOrigin, player.curentParentTile.plane.normal);
         }
 
         foreach (QuadNode quad in quadsPointExistsIn)
         {
             foreach (Shape shape in quad.shapes) 
             {
-                if(ShapeContainsPoint(point, shape)) // Cannot currently work with overlaping obstacles 
+                if(ShapeContainsPoint(projectedPoint, shape)) // Cannot currently work with overlaping obstacles 
                 {
                     // Check where the collision takes places and reflect of that 
 
                     // Find side where intersection happens 
-                    Vector3 travelLine = point - origin;
+                    Vector3 travelLine = projectedPoint - projectedOrigin;
 
-                    Vector3 intersection = GetIntersectionPoint(origin, travelLine, shape);
+                    Vector3 intersection = GetIntersectionPoint(projectedOrigin, travelLine, shape);
+                    print(intersection);
                     //float newMag = travelLine.magnitude - (intersection - origin).magnitude;
 
                     // Whip camera around to new direction 
@@ -395,25 +417,19 @@ public class QuadNode : MonoBehaviour
 
 
                     // For now just set point to intersection 
-                    nextPoint = intersection;
+                    //nextPoint = intersection;
 
                     break;
                 }
             }
 
-            if(nextPoint != Vector3.negativeInfinity)
+            if(nextPoint != Vector3.zero)
             {
                 break;
             }
 
         }
-
-        // No intersections or collisions 
-        if(nextPoint == Vector3.negativeInfinity)
-        {
-            return point;
-        }
-
+        
         // Returns this value if position has been changed to match with edge
         // or collision 
         return nextPoint;
@@ -424,7 +440,7 @@ public class QuadNode : MonoBehaviour
     {
         List<QuadNode> nodes = new List<QuadNode>();
         
-        if(PlaneContainsPoint(point))
+        if(PlaneContainsPoint(points, plane.normal, point))
         {
             nodes.Add(this);
             if (divisions != null)
@@ -448,94 +464,6 @@ public class QuadNode : MonoBehaviour
         }
     }
 
-    private bool ShapeContainsPoint(Vector3 point, Shape shape)
-    {
-        // Check if there are enough verticies
-
-        // Project to xz plane
-
-        return true;
-    }
-
-    private Vector3 GetIntersectionPoint(Vector3 origin, Vector3 offsetA, Shape shape)
-    {
-        // Must get the first two closest points in the shape 
-        Vector3 closestA = shape.Verticies[0];
-        Vector3 closestB = shape.Verticies[1];
-
-        if(Vector3.Distance(origin, closestA) > Vector3.Distance(origin, closestB))
-        {
-            // Swap
-            Vector3 temp = closestA;
-            closestA = closestB;
-            closestB = temp;
-        }
-
-        // Todo -> Change to getting closeset side in non cubic shapes **********
-        for (int i = 2; i < shape.Verticies.Length; i++)
-        {
-            float distance = Vector3.Distance(origin, shape.Verticies[i]);
-
-            if(distance < Vector3.Distance(origin, closestA))
-            {
-                closestA = shape.Verticies[i];
-            }
-            else if(distance < Vector3.Distance(origin, closestB))
-            {
-                closestB = shape.Verticies[i];
-            }
-        }
-
-        Vector3 offsetB = closestA - closestB;
-
-        // Now we have the closest side towards the origin 
-        // Since we know for a fact that when this is called there is an intersection we can find
-        // it here 
-
-        // startA.x + t * offsetA.x = startB.x + u * offsetB.x
-        // startA.z + t * offsetA.z = startB.z + u * offsetB.z
-
-        // offsetA.x(t) - offsetB.x(u) = startB.x - startA.x
-        // offsetA.z(t) - OffsetB.z(u) = startB.z - startA.z
-
-        float[,] matrix2x2 = new float[2, 2];
-
-        matrix2x2[0, 0] = offsetA.x; // A
-        matrix2x2[1, 0] = -offsetB.x;// B
-        matrix2x2[0, 1] = offsetA.z; // C
-        matrix2x2[1, 1] = -offsetB.z;// D
-
-        // Vector on other side of equation 
-        Vector2 B = new Vector2(closestB.x - origin.x, closestB.z - origin.z); 
-
-        float det = (matrix2x2[0, 0] * matrix2x2[1, 1]) - (matrix2x2[1, 0] * matrix2x2[0, 1]);
-
-        // Get inverse of matrix 
-        InverseMatrix2x2(matrix2x2, det);
-
-        // Matrix x Vector 
-        // (m[0, 0] * B[0]) + (m[0, 1] * b[1]) = t 
-        // (m[1, 0] * B[0]) + (m[1, 1] * b[1]) = u
-
-        float t = (matrix2x2[0, 0] * B[0]) + (matrix2x2[0, 1] * B[1]);
-        float u = (matrix2x2[1, 0] * B[0]) + (matrix2x2[1, 1] * B[1]);
-
-
-        return origin + offsetA * t;
-    }
-
-    private void InverseMatrix2x2(float[,] matrix, float det)
-    {
-        // Swap A and D 
-        float hold = matrix[0, 0];
-        matrix[0, 0] = matrix[1, 1] / det;
-        matrix[1, 1] = hold / det;
-
-        // Make B and C negative 
-        matrix[1, 0] = -matrix[1, 0] / det;
-        matrix[0, 1] = -matrix[0, 1] / det;
-    }
-
 
     void OnDrawGizmosSelected()
     {
@@ -553,33 +481,5 @@ public class QuadNode : MonoBehaviour
         }
     }
 
-    public struct Shape
-    {
-        private Vector3 root;
-        private Vector3[] vertices;
-
-        public Vector3 Root { get { return root; } }
-        public Vector3[] Verticies { get { return vertices; } }
-        public Vector3[] VerticiesWithRoot 
-        { 
-            get 
-            {
-                Vector3[] UsefulVerticies = new Vector3[vertices.Length];
-
-                for (int i = 0; i < UsefulVerticies.Length; i++)
-                {
-                    UsefulVerticies[i] = root + vertices[i];
-                }
-
-                return UsefulVerticies;
-            } 
-        }
-
-
-        public Shape(Vector3 root, Vector3[] vertices)
-        {
-            this.root = root;
-            this.vertices = vertices;
-        }
-    }
+   
 }

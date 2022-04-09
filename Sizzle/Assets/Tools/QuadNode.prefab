@@ -163,10 +163,14 @@ MonoBehaviour:
   - {fileID: 4937994872952182748}
   mask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 8
   divisions: []
   quadNodePrefab: {fileID: 4937994873881406659}
   shapesCount: 0
+  sideANeighbors: {fileID: 0}
+  sideBNeighbors: {fileID: 0}
+  sideCNeighbors: {fileID: 0}
+  sideDNeighbors: {fileID: 0}
   generate: 0
 --- !u!65 &5283238158196082975
 BoxCollider:

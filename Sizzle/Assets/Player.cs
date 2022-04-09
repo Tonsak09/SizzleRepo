@@ -27,7 +27,7 @@ public class Player : MonoBehaviour
 
     public float timeToMaxSpeed;
     private float a;
-    private Vector3 realSpeed;
+    public Vector3 realSpeed; // set to getter and setter
 
     public Vector3 direction;
 
@@ -200,7 +200,7 @@ public class Player : MonoBehaviour
             Vector3 newDir = Vector3.ProjectOnPlane(direction, curentParentTile.plane.normal);
             realSpeed += newDir * a * Time.deltaTime;
 
-            head.transform.rotation = Quaternion.LookRotation(newDir, curentParentTile.plane.normal);
+            //head.transform.rotation = Quaternion.LookRotation(newDir, curentParentTile.plane.normal);
         }
         else if (Input.GetKey(KeyCode.S))
         {
@@ -215,22 +215,31 @@ public class Player : MonoBehaviour
         }
         else
         {
-            head.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+            //head.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
 
             // Slow down
             realSpeed -= realSpeed.normalized * a * Time.deltaTime;
         }
+        head.transform.rotation = Quaternion.LookRotation(direction, curentParentTile.plane.normal);
 
         //print(curentParentTile.PlaneContainsPoint(Vector3.ProjectOnPlane(this.transform.position + moveAmount, curentParentTile.plane.normal)));
 
         if (realSpeed != Vector3.zero)
         {
             realSpeed = Vector3.ClampMagnitude(realSpeed, speed);
-            this.transform.position += realSpeed;
+            //this.transform.position += realSpeed;
 
             // Check if position is not within any shape of current tile 
+            Vector3 newPos = curentParentTile.MoveAlongTile(this.transform.position + realSpeed, this);
 
-            //this.transform.position = curentParentTile.MoveAlongTile(this.transform.position + moveAmount, this);
+            if(newPos == Vector3.zero)
+            {
+                this.transform.position += realSpeed;
+            }
+            else
+            {
+                realSpeed = -realSpeed;
+            }
             isMoving = true;
         }
 
