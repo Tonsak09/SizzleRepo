@@ -6,16 +6,38 @@ public static class ConvexHull
 {
     
 
+    public static Vector3[] GenerateHull(List<Vector3> points)
+    {
+        return GenerateHull(points.ToArray());
+    }
+
     // Prints convex hull of a set of n points.
-    public static List<Vector3> GenerateHull(Vector3[] points)
+    public static Vector3[] GenerateHull(Vector3[] points)
     {
         Stack<Vector3> hullStack = new Stack<Vector3>();
-        List<Vector3> hull = new List<Vector3>();
 
         List<Vector3> sortedPoints = SortPoints(points);
         Vector3 bottomost = GetBottomPoint(points);
 
-        return hull;
+        // Assumes that there is no duplicate 
+        // When used with the quadNode duplicates are deleted but if used outside that be weary!
+        sortedPoints.Remove(bottomost);
+        hullStack.Push(bottomost);
+
+        for (int i = 0; i < sortedPoints.Count - 2; i++)
+        {
+            // Anticlockwise turn 
+            if(Vector3.Cross(sortedPoints[i + 1] - sortedPoints[i], sortedPoints[i + 2] - sortedPoints[i + 1]).magnitude < 0)
+            {
+                hullStack.Push(sortedPoints[i + 1]);
+            }
+            else // Clowise turn 
+            {
+                hullStack.Pop();
+            }
+        }
+
+        return hullStack.ToArray();
     }
 
     // Gets value with lowest z value 

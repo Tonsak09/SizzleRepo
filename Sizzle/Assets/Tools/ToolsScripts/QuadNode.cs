@@ -8,6 +8,7 @@ public class QuadNode : MonoBehaviour
 
     // The bottom four point that show the actualy plane 
     public Transform[] points;
+    private List<Vector3> pointsPositions;
     public LayerMask mask;
 
     private const int MAXOBJBEFOREDIVIDE = 3;
@@ -28,6 +29,16 @@ public class QuadNode : MonoBehaviour
     public Vector3 yAxis { get { return (points[0].position - points[1].position).normalized; } }
 
     public bool generate;
+
+    private void Start()
+    {
+        pointsPositions = new List<Vector3>();
+
+        foreach (Transform point in points)
+        {
+            pointsPositions.Add(point.position);
+        }
+    }
 
     // Just so doesn't appear in the editor but still accesible by other scripts 
     public List<Shape> Shapes { get { return shapes; } set { shapes = value; } }
@@ -79,8 +90,17 @@ public class QuadNode : MonoBehaviour
 
         foreach (Collider col in collisions)
         {
+            Vector3[] localPosVerts = col.GetComponent<MeshFilter>().mesh.vertices;
+            Vector3[] worldPosVerts = new Vector3[localPosVerts.Length];
+
+            for (int i = 0; i < worldPosVerts.Length; i++)
+            {
+                worldPosVerts[i] = col.transform.TransformPoint(localPosVerts[i]);
+                print(worldPosVerts[i]);
+            }
+
             // Get verticies that actually exist in area 
-            planePositions = GenerateHull(col.transform.position, col.GetComponent<MeshFilter>().sharedMesh.vertices);
+            planePositions = GenerateHull( worldPosVerts);
             Add(new Shape( col.transform.position, planePositions));
         }
     }
@@ -258,37 +278,95 @@ public class QuadNode : MonoBehaviour
     /// </summary>
     /// <param name="verticies"></param>
     /// <returns></returns>
-    private List<Vector3> GenerateHull(Vector3 root, Vector3[] verticies)
+    private List<Vector3> GenerateHull(Vector3[] verticies)
     {
         List<Vector3> projections = new List<Vector3>();
 
         foreach (Vector3 vertex in verticies)
         {
-            Vector3 projection = Vector3.ProjectOnPlane(root + vertex, plane.normal);
+            Vector3 projection = Vector3.ProjectOnPlane(vertex, plane.normal);
 
+            // Makes sure there are no duplicates
             if (!projections.Contains(projection))
             {
+                // Points are already projected onto place we don't need to look at if they exist  
+                // particularly yet
+                /*
                 if (PlaneContainsPoint(points, plane.normal, projection))
                 {
                     projections.Add(projection);
                 }
+                */
+
+                projections.Add(projection);
             }
-            /*
-            // Add each point that lies within the plane 
-            if (PlaneContainsPoint(projection))
-            {
-                //projections.Add(Vector3.ProjectOnPlane(root + vertex, plane.normal));
-                //print("Does contain " + projections[projections.Count - 1]);
-            }
-            else
-            {
-                //print("Does not contain point " + Vector3.ProjectOnPlane(root + vertex, plane.normal));
-            }
-            */
         }
 
-        //print("Length of projects: " + projections.Count + ". Comes from " + this.transform.position);
-        // If does not lie within the plane make sure to add edge intersections TODO****
+        // Outline around the points 
+        Vector3[] fullHull = ConvexHull.GenerateHull(projections);
+
+        List<Vector3> sideA = new List<Vector3>();
+        List<Vector3> sideB = new List<Vector3>();
+        List<Vector3> sideC = new List<Vector3>();
+        List<Vector3> sideD = new List<Vector3>();
+
+        List<Vector3>[] sides = new List<Vector3>[]
+        {
+            sideA,
+            sideB,
+            sideC,
+            sideD
+        };
+
+        // Cut up fullHull if it intersects past edge 
+        for (int i = 0; i < fullHull.Length - 1; i++)
+        {
+
+            Vector3 intersectionA = GetIntersectionPoint(fullHull[i], fullHull[i + 1] - fullHull[i], pointsPositions[0], pointsPositions[1] - pointsPositions[0]);
+            Vector3 intersectionB = GetIntersectionPoint(fullHull[i], fullHull[i + 1] - fullHull[i], pointsPositions[1], pointsPositions[2] - pointsPositions[1]);
+            Vector3 intersectionC = GetIntersectionPoint(fullHull[i], fullHull[i + 1] - fullHull[i], pointsPositions[2], pointsPositions[3] - pointsPositions[2]);
+            Vector3 intersectionD = GetIntersectionPoint(fullHull[i], fullHull[i + 1] - fullHull[i], pointsPositions[3], pointsPositions[0] - pointsPositions[3]);
+
+
+            // Checks for intersection on each side of the square 
+            if (intersectionA != Vector3.zero)
+            {
+                sideA.Add(intersectionA);
+            }
+            else if (GetIntersectionPoint(fullHull[i], fullHull[i + 1] - fullHull[i], pointsPositions[1], pointsPositions[2] - pointsPositions[1]) != Vector3.zero)
+            {
+                sideB.Add(intersectionB);
+            }
+            else if (GetIntersectionPoint(fullHull[i], fullHull[i + 1] - fullHull[i], pointsPositions[2], pointsPositions[3] - pointsPositions[2]) != Vector3.zero)
+            {
+                sideC.Add(intersectionC);
+            }
+            else if (GetIntersectionPoint(fullHull[i], fullHull[i + 1] - fullHull[i], pointsPositions[3], pointsPositions[0] - pointsPositions[3]) != Vector3.zero)
+            {
+                sideD.Add(intersectionD);
+            }
+        }
+
+        for (int i = 0; i < projections.Count; i++)
+        {
+            if(!PlaneContainsPoint(points, plane.normal, projections[i]))
+            {
+                //projections.RemoveAt(i);
+                //i--;
+            }
+        }
+
+        // Adds new final projections to list 
+        projections.AddRange(sideA);
+        projections.AddRange(sideB);
+        projections.AddRange(sideC);
+        projections.AddRange(sideD);
+
+        // Reorganizes one final time 
+        //Vector3[] finalHull = ConvexHull.GenerateHull(projections);
+        //projections = new List<Vector3>(finalHull);
+        print(projections.Count);
+
 
         return projections;
     }
@@ -412,8 +490,26 @@ public class QuadNode : MonoBehaviour
                     // Find side where intersection happens 
                     Vector3 travelLine = projectedPoint - projectedOrigin;
 
-                    Vector3 intersection = GetIntersectionPoint(projectedOrigin, travelLine, shape);
-                    print(intersection);
+                    //Vector3 intersection = GetIntersectionPoint(projectedOrigin, travelLine, shape);
+                    Vector3 intersection = Vector3.zero;
+
+
+                    for (int i = 0; i < shape.Verticies.Count - 1; i++)
+                    {
+                        Vector3 intersectionPoint = GetIntersectionPoint(projectedOrigin, travelLine, shape.Verticies[i], shape.Verticies[i + 1]);
+                        if (intersectionPoint != Vector3.zero)
+                        {
+                            intersection = intersectionPoint;
+                        }
+                    }
+                    // If still no intersection defaul is start and end of verticies 
+                    // There has to be an intersection because point is within a shape 
+                    if(intersection == Vector3.zero)
+                    {
+                        intersection = GetIntersectionPoint(projectedOrigin, intersection, shape.Verticies[0], shape.Verticies[shape.Verticies.Count - 1]);
+                    }
+
+                    //print(intersection);
                     //float newMag = travelLine.magnitude - (intersection - origin).magnitude;
 
                     // Whip camera around to new direction 

@@ -25,42 +25,18 @@ public static class Maths
     public static bool ShapeContainsPoint(Vector3 point, Shape shape)
     {
         // Check if there are enough verticies
+        if(shape.Verticies.Count <= 2)
+        {
+            return false;
+        }
 
         // Project to xz plane
 
         return true;
     }
 
-    public static Vector3 GetIntersectionPoint(Vector3 origin, Vector3 offsetFromOrigin, Shape shape)
+    public static Vector3 GetIntersectionPoint(Vector3 originA, Vector3 offsetFromOriginA, Vector3 originB, Vector3 offsetFromOriginB)
     {
-        // Must get the first two closest points in the shape 
-        Vector3 closestA = shape.Verticies[0];
-        Vector3 closestB = shape.Verticies[1];
-
-        if (Vector3.Distance(origin, closestA) > Vector3.Distance(origin, closestB))
-        {
-            // Swap
-            Vector3 temp = closestA;
-            closestA = closestB;
-            closestB = temp;
-        }
-
-        // Todo -> Change to getting closeset side in non cubic shapes **********
-        for (int i = 2; i < shape.Verticies.Count; i++)
-        {
-            float distance = Vector3.Distance(origin, shape.Verticies[i]);
-
-            if (distance < Vector3.Distance(origin, closestA))
-            {
-                closestA = shape.Verticies[i];
-            }
-            else if (distance < Vector3.Distance(origin, closestB))
-            {
-                closestB = shape.Verticies[i];
-            }
-        }
-
-        Vector3 offsetB = closestA - closestB;
 
         // Now we have the closest side towards the origin 
         // Since we know for a fact that when this is called there is an intersection we can find
@@ -74,18 +50,17 @@ public static class Maths
 
         float[,] matrix2x2 = new float[2, 2];
 
-        matrix2x2[0, 0] = offsetFromOrigin.x; // A
-        matrix2x2[1, 0] = -offsetB.x;// B
-        matrix2x2[0, 1] = offsetFromOrigin.z; // C
-        matrix2x2[1, 1] = -offsetB.z;// D
+        matrix2x2[0, 0] = offsetFromOriginA.x; // A
+        matrix2x2[1, 0] = -offsetFromOriginB.x;// B
+        matrix2x2[0, 1] = offsetFromOriginA.z; // C
+        matrix2x2[1, 1] = -offsetFromOriginB.z;// D
 
         // Vector on other side of equation 
-        Vector2 B = new Vector2(closestB.x - origin.x, closestB.z - origin.z);
+        Vector2 B = new Vector2(originB.x - originA.x, originB.z - originA.z);
 
-        float det = (matrix2x2[0, 0] * matrix2x2[1, 1]) - (matrix2x2[1, 0] * matrix2x2[0, 1]);
 
-        // Get inverse of matrix 
-        InverseMatrix2x2(matrix2x2, det);
+        // Inverses the matrix 
+        InverseMatrix2x2(matrix2x2);
 
         // Matrix x Vector 
         // (m[0, 0] * B[0]) + (m[0, 1] * b[1]) = t 
@@ -94,8 +69,14 @@ public static class Maths
         float t = (matrix2x2[0, 0] * B[0]) + (matrix2x2[0, 1] * B[1]);
         float u = (matrix2x2[1, 0] * B[0]) + (matrix2x2[1, 1] * B[1]);
 
+        // Makes sure that it actually leads to the correct point 
+        if (((originA + offsetFromOriginA * t) - (originB + offsetFromOriginB * u)).magnitude <= 0.01f)
+        {
+            // Unless they intersect direction at (0, 0, 0) this should work 
+            return Vector3.zero;
+        }
 
-        return origin + offsetFromOrigin * t;
+        return originA + offsetFromOriginA * t;
     }
 
     /// <summary>
@@ -103,8 +84,10 @@ public static class Maths
     /// </summary>
     /// <param name="matrix"></param>
     /// <param name="det"></param>
-    public static void InverseMatrix2x2(float[,] matrix, float det)
+    public static void InverseMatrix2x2(float[,] matrix)
     {
+        float det = (matrix[0, 0] * matrix[1, 1]) - (matrix[1, 0] * matrix[0, 1]);
+
         // Swap A and D 
         float hold = matrix[0, 0];
         matrix[0, 0] = matrix[1, 1] / det;

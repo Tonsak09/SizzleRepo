@@ -62,7 +62,6 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //direction = (Vector3.ProjectOnPlane(this.transform.position, Vector3.up) - Vector3.ProjectOnPlane(cam.position, Vector3.up)).normalized;
 
         // Always make sure that the head is within a certain range direction from the center and can't just completely turn around 
         //AdjustAngles();
@@ -167,7 +166,7 @@ public class Player : MonoBehaviour
                 // Checks if angle between two vectors is greater than angleMax 
                 if (Mathf.Acos(Vector3.Dot(normal, newVec) / (Vector3.Magnitude(normal) * Vector3.Magnitude(newVec))) > angleMax)
                 {
-
+                    print("Out of range");
                 }
             }
         }
@@ -200,29 +199,20 @@ public class Player : MonoBehaviour
             Vector3 newDir = Vector3.ProjectOnPlane(direction, curentParentTile.plane.normal);
             realSpeed += newDir * a * Time.deltaTime;
 
-            //head.transform.rotation = Quaternion.LookRotation(newDir, curentParentTile.plane.normal);
+            head.transform.rotation = Quaternion.LookRotation(newDir, curentParentTile.plane.normal);
         }
         else if (Input.GetKey(KeyCode.S))
         {
-            // Backwards movement is pretty buggy 
-
-            /*
-            Vector3 newDir = Vector3.ProjectOnPlane(-direction, curentParentTile.plane.normal);
-            realSpeed += newDir * a * Time.deltaTime;
-
-            head.transform.rotation = Quaternion.LookRotation(direction, curentParentTile.plane.normal);
-            */
+            // Backwards movement?
         }
         else
         {
-            //head.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+            head.transform.rotation = Quaternion.LookRotation(Vector3.ProjectOnPlane(direction, curentParentTile.plane.normal), curentParentTile.plane.normal);
 
             // Slow down
             realSpeed -= realSpeed.normalized * a * Time.deltaTime;
         }
-        head.transform.rotation = Quaternion.LookRotation(direction, curentParentTile.plane.normal);
 
-        //print(curentParentTile.PlaneContainsPoint(Vector3.ProjectOnPlane(this.transform.position + moveAmount, curentParentTile.plane.normal)));
 
         if (realSpeed != Vector3.zero)
         {
@@ -270,7 +260,6 @@ public class Player : MonoBehaviour
             head.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
         }
 
-        //print(curentParentTile.PlaneContainsPoint(Vector3.ProjectOnPlane(this.transform.position + moveAmount, curentParentTile.plane.normal)));
 
         if (moveAmount != Vector3.zero)
         {
