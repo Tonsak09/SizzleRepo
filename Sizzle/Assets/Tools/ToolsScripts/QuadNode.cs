@@ -302,7 +302,8 @@ public class QuadNode : MonoBehaviour
         }
 
         // Outline around the points 
-        Vector3[] fullHull = ConvexHull.GenerateHull(projections);
+        Vector3[] fullHull = ConvexHull.GenerateHull(projections).ToArray();
+        print(fullHull.Length);
 
         List<Vector3> sideA = new List<Vector3>();
         List<Vector3> sideB = new List<Vector3>();
@@ -357,15 +358,14 @@ public class QuadNode : MonoBehaviour
         }
 
         // Adds new final projections to list 
-        projections.AddRange(sideA);
-        projections.AddRange(sideB);
-        projections.AddRange(sideC);
-        projections.AddRange(sideD);
+        //projections.AddRange(sideA);
+        //projections.AddRange(sideB);
+        //projections.AddRange(sideC);
+        //projections.AddRange(sideD);
 
         // Reorganizes one final time 
         //Vector3[] finalHull = ConvexHull.GenerateHull(projections);
-        //projections = new List<Vector3>(finalHull);
-
+        projections = new List<Vector3>(fullHull);
 
         return projections;
     }
@@ -567,7 +567,7 @@ public class QuadNode : MonoBehaviour
 
     void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.red;
+        Gizmos.color = Color.white;
 
         if(shapes != null)
         {
