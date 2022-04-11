@@ -96,7 +96,6 @@ public class QuadNode : MonoBehaviour
             for (int i = 0; i < worldPosVerts.Length; i++)
             {
                 worldPosVerts[i] = col.transform.TransformPoint(localPosVerts[i]);
-                print(worldPosVerts[i]);
             }
 
             // Get verticies that actually exist in area 
@@ -333,26 +332,27 @@ public class QuadNode : MonoBehaviour
             {
                 sideA.Add(intersectionA);
             }
-            else if (GetIntersectionPoint(fullHull[i], fullHull[i + 1] - fullHull[i], pointsPositions[1], pointsPositions[2] - pointsPositions[1]) != Vector3.zero)
+            else if (intersectionB != Vector3.zero)
             {
                 sideB.Add(intersectionB);
             }
-            else if (GetIntersectionPoint(fullHull[i], fullHull[i + 1] - fullHull[i], pointsPositions[2], pointsPositions[3] - pointsPositions[2]) != Vector3.zero)
+            else if (intersectionC != Vector3.zero)
             {
                 sideC.Add(intersectionC);
             }
-            else if (GetIntersectionPoint(fullHull[i], fullHull[i + 1] - fullHull[i], pointsPositions[3], pointsPositions[0] - pointsPositions[3]) != Vector3.zero)
+            else if (intersectionD != Vector3.zero)
             {
                 sideD.Add(intersectionD);
             }
         }
+        // Needs to include [0] and [count - 1]
 
         for (int i = 0; i < projections.Count; i++)
         {
             if(!PlaneContainsPoint(points, plane.normal, projections[i]))
             {
-                //projections.RemoveAt(i);
-                //i--;
+                projections.RemoveAt(i);
+                i--;
             }
         }
 
@@ -365,7 +365,6 @@ public class QuadNode : MonoBehaviour
         // Reorganizes one final time 
         //Vector3[] finalHull = ConvexHull.GenerateHull(projections);
         //projections = new List<Vector3>(finalHull);
-        print(projections.Count);
 
 
         return projections;

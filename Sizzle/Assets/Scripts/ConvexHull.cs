@@ -4,8 +4,6 @@ using UnityEngine;
 
 public static class ConvexHull
 {
-    
-
     public static Vector3[] GenerateHull(List<Vector3> points)
     {
         return GenerateHull(points.ToArray());
@@ -23,13 +21,20 @@ public static class ConvexHull
         // When used with the quadNode duplicates are deleted but if used outside that be weary!
         sortedPoints.Remove(bottomost);
         hullStack.Push(bottomost);
+        hullStack.Push(sortedPoints[0]);
 
-        for (int i = 0; i < sortedPoints.Count - 2; i++)
+
+        for (int i = 1; i < sortedPoints.Count - 1; i++)
         {
+            Vector2 lineA = new Vector2((sortedPoints[i + 1] - sortedPoints[i]).x, (sortedPoints[i + 1] - sortedPoints[i]).z);
+            Vector2 lineB = new Vector2((sortedPoints[i + 2] - sortedPoints[i + 1]).x, (sortedPoints[i + 2] - sortedPoints[i + 1]).z);
+           
+            MonoBehaviour.print(sortedPoints[i] == sortedPoints[i + 1]);
+
             // Anticlockwise turn 
-            if(Vector3.Cross(sortedPoints[i + 1] - sortedPoints[i], sortedPoints[i + 2] - sortedPoints[i + 1]).magnitude < 0)
+            if (Maths.DetArea(sortedPoints[i -1], sortedPoints[i], sortedPoints[i + 1]) > 0)
             {
-                hullStack.Push(sortedPoints[i + 1]);
+                hullStack.Push(sortedPoints[i]);
             }
             else // Clowise turn 
             {
@@ -64,8 +69,18 @@ public static class ConvexHull
     /// <returns></returns>
     private static List<Vector3> SortPoints(Vector3[] points)
     {
-        List<Vector3> sortedList = new List<Vector3>();
 
-        return sortedList;
+        int n = points.Length;
+        for (int i = 0; i < n - 1; i++)
+            for (int j = 0; j < n - i - 1; j++)
+                if (points[j].x > points[j + 1].x)
+                {
+                    // swap temp and arr[i]
+                    Vector3 temp = points[j];
+                    points[j] = points[j + 1];
+                    points[j + 1] = temp;
+                }
+
+        return new List<Vector3>(points);
     }
 }

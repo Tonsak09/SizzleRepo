@@ -132,4 +132,9 @@ public static class Maths
 
         return 0 <= dotABAM && dotABAM <= dotABAB && 0 <= dotBCBM && dotBCBM <= dotBCBC;
     }
+
+    public static float DetArea(Vector2 A, Vector2 B, Vector2 C)
+    {
+        return (B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x);
+    }
 }
