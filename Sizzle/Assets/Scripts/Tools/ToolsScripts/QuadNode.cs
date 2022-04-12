@@ -303,7 +303,6 @@ public class QuadNode : MonoBehaviour
 
         // Outline around the points 
         Vector3[] fullHull = ConvexHull.GenerateHull(projections).ToArray();
-        print(fullHull.Length);
 
         List<Vector3> sideA = new List<Vector3>();
         List<Vector3> sideB = new List<Vector3>();
@@ -352,8 +351,8 @@ public class QuadNode : MonoBehaviour
         {
             if(!PlaneContainsPoint(points, plane.normal, projections[i]))
             {
-                projections.RemoveAt(i);
-                i--;
+                //projections.RemoveAt(i);
+                //i--;
             }
         }
 
@@ -436,7 +435,7 @@ public class QuadNode : MonoBehaviour
                     if(sideANeighbors != null)
                     {
                         player.curentParentTile = sideANeighbors;
-                        player.realSpeed = Vector3.ProjectOnPlane(player.realSpeed, sideANeighbors.plane.normal);
+                        player.RealSpeed = Vector3.ProjectOnPlane(player.RealSpeed, sideANeighbors.plane.normal);
                     }
                 }
                 else
@@ -444,7 +443,7 @@ public class QuadNode : MonoBehaviour
                     if (sideBNeighbors != null)
                     {
                         player.curentParentTile = sideBNeighbors;
-                        player.realSpeed = Vector3.ProjectOnPlane(player.realSpeed, sideBNeighbors.plane.normal);
+                        player.RealSpeed = Vector3.ProjectOnPlane(player.RealSpeed, sideBNeighbors.plane.normal);
                     }
                 }
             }
@@ -455,7 +454,7 @@ public class QuadNode : MonoBehaviour
                     if (sideCNeighbors != null)
                     {
                         player.curentParentTile = sideCNeighbors;
-                        player.realSpeed = Vector3.ProjectOnPlane(player.realSpeed, sideCNeighbors.plane.normal);
+                        player.RealSpeed = Vector3.ProjectOnPlane(player.RealSpeed, sideCNeighbors.plane.normal);
                     }
                 }
                 else
@@ -463,7 +462,7 @@ public class QuadNode : MonoBehaviour
                     if (sideDNeighbors != null)
                     {
                         player.curentParentTile = sideDNeighbors;
-                        player.realSpeed = Vector3.ProjectOnPlane(player.realSpeed, sideDNeighbors.plane.normal);
+                        player.RealSpeed = Vector3.ProjectOnPlane(player.RealSpeed, sideDNeighbors.plane.normal);
                     }
                 }
             }
@@ -508,7 +507,7 @@ public class QuadNode : MonoBehaviour
                         intersection = GetIntersectionPoint(projectedOrigin, intersection, shape.Verticies[0], shape.Verticies[shape.Verticies.Count - 1]);
                     }
 
-                    //print(intersection);
+                    print(intersection);
                     //float newMag = travelLine.magnitude - (intersection - origin).magnitude;
 
                     // Whip camera around to new direction 
@@ -573,10 +572,16 @@ public class QuadNode : MonoBehaviour
         {
             foreach (Shape shape in shapes)
             {
-                foreach (Vector3 point in shape.Verticies)
+                for (int i = 0; i < shape.Verticies.Count; i++)
                 {
-                    Gizmos.DrawWireSphere(point, 0.1f);
+                    Gizmos.DrawWireSphere(shape.Verticies[i], 0.1f);
+
+                    if(i + 1 < shape.Verticies.Count)
+                    {
+                        Gizmos.DrawLine(shape.Verticies[i], shape.Verticies[i + 1]);
+                    }
                 }
+                Gizmos.DrawLine(shape.Verticies[shape.Verticies.Count - 1], shape.Verticies[0]);
             }
         }
     }

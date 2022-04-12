@@ -27,7 +27,7 @@ public class Player : MonoBehaviour
 
     public float timeToMaxSpeed;
     private float a;
-    public Vector3 realSpeed; // set to getter and setter
+    private Vector3 realSpeed; // set to getter and setter
 
     public Vector3 direction;
 
@@ -42,6 +42,8 @@ public class Player : MonoBehaviour
     private ParticleSystem blockSparks;
 
     private Transform[][] bodyChain;
+
+    public Vector3 RealSpeed { get { return realSpeed; } set { realSpeed = value; } }
 
     // Start is called before the first frame update
     void Start()

@@ -23,34 +23,39 @@ public static class ConvexHull
         hullStack.Push(bottomost);
         hullStack.Push(sortedPoints[0]);
 
-        MonoBehaviour.print(sortedPoints[0]);
+        MonoBehaviour.print(bottomost);
 
         for (int i = 1; i < sortedPoints.Count - 1; i++)
         {
             //Vector2 lineA = new Vector2((sortedPoints[i + 1] - sortedPoints[i]).x, (sortedPoints[i + 1] - sortedPoints[i]).z);
             //Vector2 lineB = new Vector2((sortedPoints[i + 2] - sortedPoints[i + 1]).x, (sortedPoints[i + 2] - sortedPoints[i + 1]).z);
 
-            //MonoBehaviour.print(Maths.DetArea(new Vector2(sortedPoints[i - 1].x, sortedPoints[i - 1].z), new Vector2(sortedPoints[i].x, sortedPoints[i].z), new Vector2(sortedPoints[i + 1].x, sortedPoints[i + 1].z)));
+            MonoBehaviour.print(sortedPoints[i]);
+            MonoBehaviour.print(i);
             // Anticlockwise turn 
-            if (Maths.DetArea(new Vector2(sortedPoints[i - 1].x, sortedPoints[i - 1].z), new Vector2(sortedPoints[i].x, sortedPoints[i].z), new Vector2(sortedPoints[i + 1].x, sortedPoints[i + 1].z)) < 0)
+            if (Maths.DetArea(new Vector2(sortedPoints[i - 1].x, sortedPoints[i - 1].z), new Vector2(sortedPoints[i].x, sortedPoints[i].z), new Vector2(sortedPoints[i + 1].x, sortedPoints[i + 1].z)) > 0)
             {
                 hullStack.Push(sortedPoints[i]);
             }
             else // Clowise turn 
             {
-                hullStack.Pop();
+                if(hullStack.Count > 1)
+                {
+                    hullStack.Pop();
+                }
             }
-
         }
 
+        MonoBehaviour.print(Maths.DetArea(new Vector2(sortedPoints[sortedPoints.Count - 2].x, sortedPoints[sortedPoints.Count - 2].z), new Vector2(sortedPoints[sortedPoints.Count - 1].x, sortedPoints[sortedPoints.Count - 1].z), new Vector2(sortedPoints[0].x, sortedPoints[0].z)));
+
         // Check with [0] and [count - 1]
-        if (Maths.DetArea(new Vector2(sortedPoints[sortedPoints.Count - 2].x, sortedPoints[sortedPoints.Count - 2].z), new Vector2(sortedPoints[sortedPoints.Count - 1].x, sortedPoints[sortedPoints.Count - 1].z), new Vector2(sortedPoints[0].x, sortedPoints[0].z)) > 0)
+        if (Maths.DetArea(new Vector2(sortedPoints[sortedPoints.Count - 2].x, sortedPoints[sortedPoints.Count - 2].z), new Vector2(sortedPoints[sortedPoints.Count - 1].x, sortedPoints[sortedPoints.Count - 1].z), new Vector2(sortedPoints[0].x, sortedPoints[0].z)) > 1)
         {
             hullStack.Push(sortedPoints[sortedPoints.Count - 1]);
         }
         else // Clowise turn 
         {
-            //hullStack.Pop();
+            hullStack.Push(sortedPoints[0]);
         }
 
         return hullStack;
@@ -84,7 +89,7 @@ public static class ConvexHull
         int n = points.Length;
         for (int i = 0; i < n - 1; i++)
             for (int j = 0; j < n - i - 1; j++)
-                if (points[j].x > points[j + 1].x)
+                if (points[j].x < points[j + 1].x)
                 {
                     // swap temp and arr[i]
                     Vector3 temp = points[j];

@@ -30,7 +30,14 @@ public static class Maths
             return false;
         }
 
-        // Project to xz plane
+        // Project to xz plane - Won't work if quad is directly up but it should not be in that situation 
+        List<Vector3> projectedVerticies = new List<Vector3>();
+        foreach (Vector3 vertex in shape.Verticies)
+        {
+            projectedVerticies.Add(Vector3.ProjectOnPlane(vertex, Vector3.up));
+        }
+
+
 
         return true;
     }
