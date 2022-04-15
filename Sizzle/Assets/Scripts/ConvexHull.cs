@@ -12,10 +12,12 @@ public static class ConvexHull
     // Prints convex hull of a set of n points.
     public static Stack<Vector3> GenerateHull(Vector3[] points)
     {
+        
         Stack<Vector3> hullStack = new Stack<Vector3>();
 
-        List<Vector3> sortedPoints = SortPoints(points);
         Vector3 bottomost = GetBottomPoint(points);
+        List<Vector3> sortedPoints = SortPoints(bottomost, points);
+
 
         // Assumes that there is no duplicate 
         // When used with the quadNode duplicates are deleted but if used outside that be weary!
@@ -30,35 +32,80 @@ public static class ConvexHull
             //Vector2 lineA = new Vector2((sortedPoints[i + 1] - sortedPoints[i]).x, (sortedPoints[i + 1] - sortedPoints[i]).z);
             //Vector2 lineB = new Vector2((sortedPoints[i + 2] - sortedPoints[i + 1]).x, (sortedPoints[i + 2] - sortedPoints[i + 1]).z);
 
-            MonoBehaviour.print(sortedPoints[i]);
-            MonoBehaviour.print(i);
+            Vector3 hold = hullStack.Pop();
+
+            float detArea = Maths.DetArea(new Vector2(hullStack.Peek().x, hullStack.Peek().z), new Vector2(hold.x, hold.z), new Vector2(sortedPoints[i].x, sortedPoints[i].z));
+
+            MonoBehaviour.print(detArea);
+
+            //MonoBehaviour.print(sortedPoints[i] + " : " + i);
+            //hullStack.Push(sortedPoints[i]);
             // Anticlockwise turn 
-            if (Maths.DetArea(new Vector2(sortedPoints[i - 1].x, sortedPoints[i - 1].z), new Vector2(sortedPoints[i].x, sortedPoints[i].z), new Vector2(sortedPoints[i + 1].x, sortedPoints[i + 1].z)) > 0)
+            if (detArea > 0)
             {
+                hullStack.Push(hold);
                 hullStack.Push(sortedPoints[i]);
             }
             else // Clowise turn 
             {
-                if(hullStack.Count > 1)
-                {
-                    hullStack.Pop();
-                }
+                hullStack.Push(sortedPoints[i]);
+                //hullStack.Pop();
+                
             }
         }
 
-        MonoBehaviour.print(Maths.DetArea(new Vector2(sortedPoints[sortedPoints.Count - 2].x, sortedPoints[sortedPoints.Count - 2].z), new Vector2(sortedPoints[sortedPoints.Count - 1].x, sortedPoints[sortedPoints.Count - 1].z), new Vector2(sortedPoints[0].x, sortedPoints[0].z)));
 
         // Check with [0] and [count - 1]
         if (Maths.DetArea(new Vector2(sortedPoints[sortedPoints.Count - 2].x, sortedPoints[sortedPoints.Count - 2].z), new Vector2(sortedPoints[sortedPoints.Count - 1].x, sortedPoints[sortedPoints.Count - 1].z), new Vector2(sortedPoints[0].x, sortedPoints[0].z)) > 1)
         {
-            hullStack.Push(sortedPoints[sortedPoints.Count - 1]);
+            //hullStack.Push(sortedPoints[sortedPoints.Count - 1]);
         }
         else // Clowise turn 
         {
-            hullStack.Push(sortedPoints[0]);
+            //hullStack.Push(sortedPoints[0]);
+        }
+
+
+        return hullStack;
+        
+        /*
+        Stack<Vector3> hullStack = new Stack<Vector3>();
+
+        Vector3 min = GetBottomPoint(points);
+        SortPoints(min, points);
+
+        hullStack.Push(points[0]);
+        hullStack.Push(points[1]);
+
+        for (int i = 2; i < points.Length; i++)
+        {
+            Vector3 next = points[i];
+            Vector2 previous = hullStack.Pop();
+            
+
+
+            while(hullStack.Peek() != null)
+            {
+                if(Maths.DetArea(hullStack.Peek(), previous, next) > 1)
+                {
+                    previous = hullStack.Pop();
+                    break;
+                }
+            }
+            
+
+            hullStack.Push(previous);
+            hullStack.Push(points[i]);
+        }
+
+        Vector3 p = hullStack.Pop();
+        if(Maths.DetArea(hullStack.Peek(), p, min) > 0)
+        {
+            hullStack.Push(p);
         }
 
         return hullStack;
+        */
     }
 
     // Gets value with lowest z value 
@@ -83,13 +130,19 @@ public static class ConvexHull
     /// </summary>
     /// <param name="points"></param>
     /// <returns></returns>
-    private static List<Vector3> SortPoints(Vector3[] points)
+    private static List<Vector3> SortPoints(Vector3 origin, Vector3[] points)
     {
+        Dictionary<Vector3, float> angles = new Dictionary<Vector3, float>();
+
+        for (int i = 0; i < points.Length; i++)
+        {
+            angles.Add(points[i], Vector2.Angle(Vector2.right, new Vector2(points[i].x, points[i].z) - new Vector2(origin.x, origin.z)));
+        }
 
         int n = points.Length;
         for (int i = 0; i < n - 1; i++)
             for (int j = 0; j < n - i - 1; j++)
-                if (points[j].x < points[j + 1].x)
+                if (angles[points[j]] < angles[points[j + 1]])
                 {
                     // swap temp and arr[i]
                     Vector3 temp = points[j];

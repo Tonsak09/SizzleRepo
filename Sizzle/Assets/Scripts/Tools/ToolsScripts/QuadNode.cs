@@ -581,7 +581,7 @@ public class QuadNode : MonoBehaviour
                         Gizmos.DrawLine(shape.Verticies[i], shape.Verticies[i + 1]);
                     }
                 }
-                Gizmos.DrawLine(shape.Verticies[shape.Verticies.Count - 1], shape.Verticies[0]);
+                //Gizmos.DrawLine(shape.Verticies[shape.Verticies.Count - 1], shape.Verticies[0]);
             }
         }
     }
