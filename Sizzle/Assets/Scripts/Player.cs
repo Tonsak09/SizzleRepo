@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -67,6 +68,8 @@ public class Player : MonoBehaviour
 
         // Always make sure that the head is within a certain range direction from the center and can't just completely turn around 
         //AdjustAngles();
+
+        AdjustHead();
 
         switch (state)
         {
@@ -150,6 +153,35 @@ public class Player : MonoBehaviour
         }
     }
 
+
+    private const float HEADTURNTIME = 0.2f;
+    private float turnSpeed = 0.1f;
+    private float startTime;
+    private Quaternion startRot;
+
+    private Quaternion holdLookRot; // Used to see if rotation has been updated 
+    private void AdjustHead()
+    {
+        Quaternion lookQuaternion = Quaternion.LookRotation(direction, curentParentTile.plane.normal);
+        float t = (Time.time - startTime) / (HEADTURNTIME);
+
+        // if new position has changed
+        if (lookQuaternion != holdLookRot)
+        {
+            startTime = Time.time;
+            startRot = head.transform.rotation;
+        }
+
+        if (head.transform.rotation != lookQuaternion)
+        {
+            head.transform.rotation = Quaternion.Lerp(startRot, lookQuaternion, t);
+        }
+        print(t);
+
+
+        holdLookRot = lookQuaternion;
+    }
+
     /// <summary>
     /// Adjust the angle for each body part.
     /// Returns the new angle if necessary 
@@ -201,7 +233,6 @@ public class Player : MonoBehaviour
             Vector3 newDir = Vector3.ProjectOnPlane(direction, curentParentTile.plane.normal);
             realSpeed += newDir * a * Time.deltaTime;
 
-            head.transform.rotation = Quaternion.LookRotation(newDir, curentParentTile.plane.normal);
         }
         else if (Input.GetKey(KeyCode.S))
         {
@@ -209,7 +240,7 @@ public class Player : MonoBehaviour
         }
         else
         {
-            head.transform.rotation = Quaternion.LookRotation(Vector3.ProjectOnPlane(direction, curentParentTile.plane.normal), curentParentTile.plane.normal);
+            //head.transform.rotation = Quaternion.LookRotation(Vector3.ProjectOnPlane(direction, curentParentTile.plane.normal), curentParentTile.plane.normal);
 
             // Slow down
             realSpeed -= realSpeed.normalized * a * Time.deltaTime;
@@ -248,7 +279,6 @@ public class Player : MonoBehaviour
             Vector3 newDir = Vector3.ProjectOnPlane(direction, curentParentTile.plane.normal);
             moveAmount += newDir * speed * Time.deltaTime;
 
-            head.transform.rotation = Quaternion.LookRotation(newDir, curentParentTile.plane.normal);
         }
         else if (Input.GetKey(KeyCode.S))
         {
@@ -304,7 +334,7 @@ public class Player : MonoBehaviour
             realSpeed = Vector3.ProjectOnPlane(realSpeed, new Plane(this.transform.position, this.transform.position + direction, this.transform.position + curentParentTile.plane.normal * 1).normal);
         }
 
-        head.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+        //head.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
         return isMoving;
     }
 
