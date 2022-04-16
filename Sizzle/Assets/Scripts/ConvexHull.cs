@@ -36,7 +36,7 @@ public static class ConvexHull
 
             float detArea = Maths.DetArea(new Vector2(hullStack.Peek().x, hullStack.Peek().z), new Vector2(hold.x, hold.z), new Vector2(sortedPoints[i].x, sortedPoints[i].z));
 
-            MonoBehaviour.print(detArea);
+            //MonoBehaviour.print(detArea);
 
             //MonoBehaviour.print(sortedPoints[i] + " : " + i);
             //hullStack.Push(sortedPoints[i]);

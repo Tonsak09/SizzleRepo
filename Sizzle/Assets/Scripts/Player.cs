@@ -153,15 +153,20 @@ public class Player : MonoBehaviour
         }
     }
 
-
+    /*
     private const float HEADTURNTIME = 0.2f;
     private float turnSpeed = 0.1f;
     private float startTime;
     private Quaternion startRot;
 
     private Quaternion holdLookRot; // Used to see if rotation has been updated 
+    */
+    private float minAngle = 0.1f;
+    public float angleReduce = 0.01f;
+
     private void AdjustHead()
     {
+        /*
         Quaternion lookQuaternion = Quaternion.LookRotation(direction, curentParentTile.plane.normal);
         float t = (Time.time - startTime) / (HEADTURNTIME);
 
@@ -180,6 +185,35 @@ public class Player : MonoBehaviour
 
 
         holdLookRot = lookQuaternion;
+        */
+
+        // Get angle between current head direction and aimed direction 
+        float angle = Vector3.Angle(head.transform.forward, direction) * Mathf.Deg2Rad;
+        float newAngle = angle * angleReduce;
+
+        
+        
+        Quaternion lookQuaternion = Quaternion.LookRotation(direction, curentParentTile.plane.normal);
+
+        
+
+        float difference = angle - newAngle;
+        print(difference);
+
+        if (difference <= minAngle)
+        {
+            //head.transform.rotation = lookQuaternion;
+        }
+
+        if (difference > Mathf.PI)
+        {
+            head.transform.forward = Maths.RotateVectorXZ(head.transform.forward, difference * Time.deltaTime);
+        }
+        else
+        {
+            head.transform.forward = Maths.RotateVectorXZ(head.transform.forward, -difference * Time.deltaTime);
+        }
+        
     }
 
     /// <summary>
@@ -314,24 +348,18 @@ public class Player : MonoBehaviour
         if (Input.GetKey(KeyCode.A))
         {
             // Rotation matrix
-            direction = new Vector3(
-                direction.x * Mathf.Cos(speed * Time.deltaTime) - direction.z * Mathf.Sin(speed * Time.deltaTime),
-                0,
-                direction.x * Mathf.Sin(speed * Time.deltaTime) + direction.z * Mathf.Cos(speed * Time.deltaTime));
+            direction = Maths.RotateVectorXZ(direction, speed * Time.deltaTime);
             isMoving = true;
 
-            realSpeed = Vector3.ProjectOnPlane(realSpeed, new Plane(this.transform.position, this.transform.position + direction, this.transform.position + curentParentTile.plane.normal * 1).normal);
+            realSpeed = Vector3.ProjectOnPlane(realSpeed, new Plane(this.transform.position, this.transform.position + direction, this.transform.position + curentParentTile.plane.normal).normal);
         }
         else if (Input.GetKey(KeyCode.D))
         {
             // Rotation matrix 
-            direction = new Vector3(
-                direction.x * Mathf.Cos(-speed * Time.deltaTime) - direction.z * Mathf.Sin(-speed * Time.deltaTime),
-                0,
-                direction.x * Mathf.Sin(-speed * Time.deltaTime) + direction.z * Mathf.Cos(-speed * Time.deltaTime));
+            direction = Maths.RotateVectorXZ(direction, -speed * Time.deltaTime);
             isMoving = true;
 
-            realSpeed = Vector3.ProjectOnPlane(realSpeed, new Plane(this.transform.position, this.transform.position + direction, this.transform.position + curentParentTile.plane.normal * 1).normal);
+            realSpeed = Vector3.ProjectOnPlane(realSpeed, new Plane(this.transform.position, this.transform.position + direction, this.transform.position + curentParentTile.plane.normal).normal);
         }
 
         //head.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);

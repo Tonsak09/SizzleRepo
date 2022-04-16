@@ -144,4 +144,14 @@ public static class Maths
     {
         return (B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x);
     }
+
+    public static Vector3 RotateVectorXZ(Vector3 vector, float angle)
+    {
+        return new Vector3
+            (
+                vector.x * Mathf.Cos(angle) - vector.z * Mathf.Sin(angle),
+                0,
+                vector.x * Mathf.Sin(angle) + vector.z * Mathf.Cos(angle)
+            );
+    }
 }
